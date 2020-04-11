@@ -7,7 +7,7 @@
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
- * 
+ *
  * states.inc.php
  *
  * Hearts game states description
@@ -16,7 +16,7 @@
 
 /*
 *
-*   Game state machine is a tool used to facilitate game developpement by doing common stuff that can be set up
+*   Game state machine is a tool used to facilitate game development by doing common stuff that can be set up
 *   in a very easy way from this configuration file.
 *
 *   Please check the BGA Studio presentation about game state to understand this, and associated documentation.
@@ -59,76 +59,83 @@ $machinestates = array(
         "description" => clienttranslate("Game setup"),
         "type" => "manager",
         "action" => "stGameSetup",
-        "transitions" => array( "" => 20 )
+        "transitions" => array("" => 20)
     ),
-    
-    
+
+
     /// New hand
-    20 => array(
+    10 => array(
         "name" => "newHand",
         "description" => "",
         "type" => "game",
         "action" => "stNewHand",
-        "updateGameProgression" => true,   
-        "transitions" => array( "" => 21 )
-    ),    
+        "updateGameProgression" => true,
+        "transitions" => array("" => 21)
+    ),
 
-    21 => array(       
-        "name" => "giveCards",
-        "description" => clienttranslate('Some players must choose 3 cards to give to ${direction}'),
-        "descriptionmyturn" => clienttranslate('${you} must choose 3 cards to give to ${direction}'),
+    20 => array(
+        "name" => "playerTurn",
+        "description" => clienttranslate('${actplayer} must play a card'),
+        "descriptionmyturn" => clienttranslate('${you} must play a card'),
         "type" => "multipleactiveplayer",
-        "action" => "stGiveCards",
+        "action" => "stPlayerTurn",
         "args" => "argGiveCards",
-        "possibleactions" => array( "giveCards" ),
-        "transitions" => array( "giveCards" => 22, "skip" => 22 )        
-    ), 
-    
+        "possibleactions" => array("giveCards"),
+        "transitions" => array("giveCards" => 22, "skip" => 22)
+    ),
+
+    30 => array(
+        "name" => "endTurn",
+        "description" => "",
+        "type" => "game",
+        "action" => "stEndTurn",
+        "updateGameProgression" => true,
+        "transitions" => array("playerInteraction" => 30, "skip" => 30)
+    ),
+
     22 => array(
         "name" => "takeCards",
         "description" => "",
         "type" => "game",
         "action" => "stTakeCards",
-        "transitions" => array( "startHand" => 30, "skip" => 30  )
-    ),        
-    
+        "transitions" => array("startHand" => 30, "skip" => 30)
+    ),
+
     // Trick
-    
+
     30 => array(
         "name" => "newTrick",
         "description" => "",
         "type" => "game",
         "action" => "stNewTrick",
-        "transitions" => array( "" => 31 )
-    ),       
+        "transitions" => array("" => 31)
+    ),
     31 => array(
         "name" => "playerTurn",
         "description" => clienttranslate('${actplayer} must play a card'),
         "descriptionmyturn" => clienttranslate('${you} must play a card'),
         "type" => "activeplayer",
-        "possibleactions" => array( "playCard" ),
-        "transitions" => array( "playCard" => 32 )
-    ), 
+        "possibleactions" => array("playCard"),
+        "transitions" => array("playCard" => 32)
+    ),
     32 => array(
         "name" => "nextPlayer",
         "description" => "",
         "type" => "game",
         "action" => "stNextPlayer",
-        "transitions" => array( "nextPlayer" => 31, "nextTrick" => 30, "endHand" => 40 )
-    ), 
-    
-    
+        "transitions" => array("nextPlayer" => 31, "nextTrick" => 30, "endHand" => 40)
+    ),
+
     // End of the hand (scoring, etc...)
     40 => array(
         "name" => "endHand",
         "description" => "",
         "type" => "game",
         "action" => "stEndHand",
-        "transitions" => array( "nextHand" => 20, "endGame" => 99 )
-    ),     
-   
-    // Final state.
-    // Please do not modify.
+        "transitions" => array("nextHand" => 20, "endGame" => 99)
+    ),
+
+    // Final state. Please do not modify.
     99 => array(
         "name" => "gameEnd",
         "description" => clienttranslate("End of game"),
@@ -136,7 +143,6 @@ $machinestates = array(
         "action" => "stGameEnd",
         "args" => "argGameEnd"
     )
-
 );
 
 

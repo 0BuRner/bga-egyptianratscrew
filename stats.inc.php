@@ -36,35 +36,35 @@ $stats_type = array(
 
     // Statistics global to table
     "table" => array(
-        "handNbr" => array(   "id"=> 10,
-                                "name" => totranslate("Number of hands"), 
-                                "type" => "int" ),
-
-
+        "pileSlapOk" => array("id" => 10,
+            "name" => totranslate("Number of slap success"),
+            "type" => "int"),
+        "pileSlapMissed" => array("id" => 11,
+            "name" => totranslate("Number of slap missed"),
+            "type" => "int")
     ),
-    
+
     // Statistics existing for each player
     "player" => array(
-    
-        "getQueenOfSpade" => array(   "id"=> 10,
-                                "name" => totranslate("Get the Queen of Spade during a hand"), 
-                                "type" => "int" ),
-                                
-        "getHearts" => array(   "id"=> 11,
-                                "name" => totranslate("Total heart cards collected"), 
-                                "type" => "int" ),
-
-        "getAllPointCards" => array(   "id"=> 12,
-                                "name" => totranslate("Get all egyptianratscrew + Queen of Spade"), 
-                                "type" => "int" ),
-
-        "getNoPointCards" => array(   "id"=> 13,
-                                "name" => totranslate("Get no cards with ponts during a hand"), 
-                                "type" => "int" )
-
-  
+        "challengeWon" => array("id" => 10,
+            "name" => totranslate("Number of challenge won"),
+            "type" => "int"),
+        "challengeLost" => array("id" => 11,
+            "name" => totranslate("Number of challenge lost"),
+            "type" => "int"),
+        "pileSlapWon" => array("id" => 12,
+            "name" => totranslate("Number of times you won by slapping the pile"),
+            "type" => "int"),
+        "pileSlapLost" => array("id" => 13,
+            "name" => totranslate("Number of times you were not the fastest to slap the pile"),
+            "type" => "int"),
+        "pileSlapFailed" => array("id" => 14,
+            "name" => totranslate("Number of times you wrongly slapped the pile"),
+            "type" => "int"),
+        "playerEliminated" => array("id" => 15,
+            "name" => totranslate("Number of players eliminated"),
+            "type" => "int")
     )
-
 );
 
 

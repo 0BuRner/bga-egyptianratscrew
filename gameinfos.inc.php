@@ -1,7 +1,9 @@
 <?php
 
-$gameinfos = array( 
+$gameinfos = array(
 
+// Name of the game in English (will serve as the basis for translation)
+'game_name' => 'Egyptian Ratscrew',
 
 // Game designer (or game designers, separated by commas)
 'designer' => '',
@@ -21,7 +23,7 @@ $gameinfos = array(
 // Board Game Geek ID of the publisher
 'publisher_bgg_id' => 171,
 
-// Board game geek if of the game
+// Board Game Geek ID of the game
 'bgg_id' => 15712,
 
 
@@ -53,8 +55,11 @@ $gameinfos = array(
 'is_beta' => 0,                     
 
 // Is this game cooperative (all players wins together or loose together)
-'is_coop' => 0, 
+'is_coop' => 0,
 
+// If in the game, all losers are equal (no score to rank them or explicit in the rules that losers are not ranked between them), set this to true
+// The game end result will display "Winner" for the 1st player and "Loser" for all other players
+'losers_not_ranked' => true,
 
 // Complexity of the game, from 0 (extremely simple) to 5 (extremely complex)
 'complexity' => 1,

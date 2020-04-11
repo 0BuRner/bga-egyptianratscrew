@@ -23,19 +23,21 @@
  * Note: if the HTML of your game interface is always the same, you don't have to place anything here.
  *
  */
-  
-  require_once( APP_BASE_PATH."view/common/game.view.php" );
-  
-  class view_egyptianratscrew_egyptianratscrew extends game_view
-  {
-    function getGameName() {
-        return clienttranslate("egyptianratscrew");
-    }    
-  	function build_page( $viewArgs )
-  	{		
-  	    // Get players & players number
+
+require_once(APP_BASE_PATH . "view/common/game.view.php");
+
+class view_egyptianratscrew_egyptianratscrew extends game_view
+{
+    function getGameName()
+    {
+        return "egyptianratscrew";
+    }
+
+    function build_page($viewArgs)
+    {
+        // Get players & players number
         $players = $this->game->loadPlayersBasicInfos();
-        $players_nbr = count( $players );
+        $players_nbr = count($players);
 
         /*********** Place your code below:  ************/
 
@@ -43,19 +45,18 @@
         // Arrange players so that I am on south
         $player_to_dir = $this->game->getPlayersToDirection();
 
-        $this->page->begin_block( "egyptianratscrew_egyptianratscrew", "player" );
-        foreach( $player_to_dir as $player_id => $dir )
-        {
-            $this->page->insert_block( "player", array( "PLAYER_ID" => $player_id,
-                                                        "PLAYER_NAME" => $players[$player_id]['player_name'],
-                                                        "PLAYER_COLOR" => $players[$player_id]['player_color'],
-                                                        "DIR" => $dir ) );
+        $this->page->begin_block("egyptianratscrew_egyptianratscrew", "player");
+        foreach ($player_to_dir as $player_id => $dir) {
+            $this->page->insert_block("player", array("PLAYER_ID" => $player_id,
+                "PLAYER_NAME" => $players[$player_id]['player_name'],
+                "PLAYER_COLOR" => $players[$player_id]['player_color'],
+                "DIR" => $dir));
         }
-        
+
         $this->tpl['MY_HAND'] = self::_("My hand");
 
         /*********** Do not change anything below this line  ************/
-  	}
-  }
+    }
+}
   
 
