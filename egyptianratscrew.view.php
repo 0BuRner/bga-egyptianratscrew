@@ -29,7 +29,7 @@
   class view_egyptianratscrew_egyptianratscrew extends game_view
   {
     function getGameName() {
-        return "egyptianratscrew";
+        return clienttranslate("egyptianratscrew");
     }    
   	function build_page( $viewArgs )
   	{		

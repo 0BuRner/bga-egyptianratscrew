@@ -44,7 +44,7 @@ class Hearts extends Table
 	
     protected function getGameName( )
     {
-        return "egyptianratscrew";
+        return clienttranslate("egyptianratscrew");
     }	
 
     /*

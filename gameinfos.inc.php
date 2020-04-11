@@ -4,7 +4,7 @@ $gameinfos = array(
 
 
 // Game designer (or game designers, separated by commas)
-'designer' => '',       
+'designer' => '',
 
 // Game artist (or game artists, separated by commas)
 'artist' => '',         
@@ -19,34 +19,34 @@ $gameinfos = array(
 'publisher_website' => '',   
 
 // Board Game Geek ID of the publisher
-'publisher_bgg_id' => 0,
+'publisher_bgg_id' => 171,
 
 // Board game geek if of the game
-'bgg_id' => 6887,
+'bgg_id' => 15712,
 
 
 // Players configuration that can be played (ex: 2 to 4 players)
-'players' => array( 4 ),    
+'players' => array(2, 3, 4, 5, 6, 7, 8, 9, 10),
 
 // Suggest players to play with this number of players. Must be null if there is no such advice, or if there is only one possible player configuration.
-'suggest_player_number' => null,
+'suggest_player_number' => 4,
 
 // Discourage players to play with this number of players. Must be null if there is no such advice.
-'not_recommend_player_number' => array( ),
+'not_recommend_player_number' => array(),
 
 
 
 // Estimated game duration, in minutes (used only for the launch, afterward the real duration is computed)
-'estimated_duration' => 25,           
+'estimated_duration' => 30,
 
 // Time in second add to a player when "giveExtraTime" is called (speed profile = fast)
-'fast_additional_time' => 7,           
+'fast_additional_time' => 5,
 
 // Time in second add to a player when "giveExtraTime" is called (speed profile = medium)
-'medium_additional_time' => 16,           
+'medium_additional_time' => 10,
 
 // Time in second add to a player when "giveExtraTime" is called (speed profile = slow)
-'slow_additional_time' => 23,           
+'slow_additional_time' => 15,
 
 
 // Game is "beta". A game MUST set is_beta=1 when published on BGA for the first time, and must remains like this until all bugs are fixed.
@@ -57,16 +57,16 @@ $gameinfos = array(
 
 
 // Complexity of the game, from 0 (extremely simple) to 5 (extremely complex)
-'complexity' => 2,    
+'complexity' => 1,
 
 // Luck of the game, from 0 (absolutely no luck in this game) to 5 (totally luck driven)
-'luck' => 3,    
+'luck' => 2,
 
 // Strategy of the game, from 0 (no strategy can be setup) to 5 (totally based on strategy)
-'strategy' => 2,    
+'strategy' => 1,
 
 // Diplomacy of the game, from 0 (no interaction in this game) to 5 (totally based on interaction and discussion between players)
-'diplomacy' => 1,    
+'diplomacy' => 0,
 
 
 // Games categories

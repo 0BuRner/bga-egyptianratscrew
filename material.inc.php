@@ -46,3 +46,10 @@ $this->values_label = array(
     13 => clienttranslate('K'),
     14 => clienttranslate('A')
 );
+
+$this->challenge_values = array(
+    11 => 1,
+    12 => 2,
+    13 => 3,
+    14 => 4
+);
