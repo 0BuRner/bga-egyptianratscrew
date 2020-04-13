@@ -62,15 +62,12 @@ $machinestates = array(
         "transitions" => array("" => 20)
     ),
 
-
-    /// New hand
     10 => array(
-        "name" => "newHand",
+        "name" => "init",
         "description" => "",
         "type" => "game",
-        "action" => "stNewHand",
-        "updateGameProgression" => true,
-        "transitions" => array("" => 21)
+        "action" => "stInit",
+        "transitions" => array("playerTurn" => 20)
     ),
 
     20 => array(
@@ -79,9 +76,8 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} must play a card'),
         "type" => "multipleactiveplayer",
         "action" => "stPlayerTurn",
-        "args" => "argGiveCards",
-        "possibleactions" => array("giveCards"),
-        "transitions" => array("giveCards" => 22, "skip" => 22)
+        "transitions" => array("endTurn" => 30),
+        "possibleactions" => array("playCard", "slapPile")
     ),
 
     30 => array(
@@ -89,50 +85,8 @@ $machinestates = array(
         "description" => "",
         "type" => "game",
         "action" => "stEndTurn",
-        "updateGameProgression" => true,
-        "transitions" => array("playerInteraction" => 30, "skip" => 30)
-    ),
-
-    22 => array(
-        "name" => "takeCards",
-        "description" => "",
-        "type" => "game",
-        "action" => "stTakeCards",
-        "transitions" => array("startHand" => 30, "skip" => 30)
-    ),
-
-    // Trick
-
-    30 => array(
-        "name" => "newTrick",
-        "description" => "",
-        "type" => "game",
-        "action" => "stNewTrick",
-        "transitions" => array("" => 31)
-    ),
-    31 => array(
-        "name" => "playerTurn",
-        "description" => clienttranslate('${actplayer} must play a card'),
-        "descriptionmyturn" => clienttranslate('${you} must play a card'),
-        "type" => "activeplayer",
-        "possibleactions" => array("playCard"),
-        "transitions" => array("playCard" => 32)
-    ),
-    32 => array(
-        "name" => "nextPlayer",
-        "description" => "",
-        "type" => "game",
-        "action" => "stNextPlayer",
-        "transitions" => array("nextPlayer" => 31, "nextTrick" => 30, "endHand" => 40)
-    ),
-
-    // End of the hand (scoring, etc...)
-    40 => array(
-        "name" => "endHand",
-        "description" => "",
-        "type" => "game",
-        "action" => "stEndHand",
-        "transitions" => array("nextHand" => 20, "endGame" => 99)
+        "transitions" => array("playerTurn" => 20, "gameEnd" => 99),
+        "updateGameProgression" => true
     ),
 
     // Final state. Please do not modify.
