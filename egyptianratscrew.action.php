@@ -41,7 +41,6 @@ class action_egyptianratscrew extends APP_GameAction
         self::ajaxResponse();
     }
 
-    // TODO implement JS
     public function slapPile()
     {
         self::setAjaxMode();
@@ -49,5 +48,3 @@ class action_egyptianratscrew extends APP_GameAction
         self::ajaxResponse();
     }
 }
-  
-
