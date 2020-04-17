@@ -66,7 +66,7 @@ class EgyptianRatscrew extends Table
     {
         // Set the colors of the players with HTML color code
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
-        $default_color = array("152c81", "cf6402", "018944", "9d0000", "017071", "fff301", "400061", "a1d97d", "8d0073", "703301");
+        $default_color = array("152c81", "cf6402", "018944", "9d0000", "017071", "fff301", "400061", "000000", "8d0073", "703301");
 
         // Create players
         $this->createPlayers($players, $default_color);
