@@ -22,6 +22,8 @@ require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
 class EgyptianRatscrew extends Table
 {
+    private $slappingPlayers;
+
     function __construct()
     {
         // Your global variables labels:
@@ -31,10 +33,10 @@ class EgyptianRatscrew extends Table
         //  the corresponding ID in gameoptions.inc.php.
         // Note: afterwards, you can get/set the global variables with getGameStateValue/setGameStateInitialValue/setGameStateValue
         parent::__construct();
-        // TODO
         self::initGameStateLabels(array(
-            "slappingPlayers" => 11,
             "gameLength" => 100));
+
+        $this->slappingPlayers = array();
 
         $this->cards = self::getNew("module.common.deck");
         $this->cards->init("card");
@@ -74,6 +76,8 @@ class EgyptianRatscrew extends Table
         /************ Start the game initialization *****/
         // Init game statistics
         $this->initStats();
+
+        // Init game variables
 
         // Create cards
         $this->cards->createCards($this->createCards(), 'deck');
@@ -171,31 +175,30 @@ class EgyptianRatscrew extends Table
         $isSlappable = true;
 
         // check someone slap the pile
-        $playersSlap = self::getGameStateValue('slappingPlayers');
-        if (!empty($playersSlap)) {
+        if (!empty($this->slappingPlayers)) {
             if ($isSlappable) {
                 // # check slap winner
-                $winner_id = array_shift($playersSlap);
+                $winner_id = array_shift($this->slappingPlayers);
                 // Move cards on the table to the bottom of the player's hand
                 $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
                 self::incStat(1, "pileSlapWon", $winner_id);
 
                 // # check slap losers
-                foreach ($playersSlap as $loser_id) {
+                foreach ($this->slappingPlayers as $loser_id) {
                     self::incStat(1, "pileSlapLost", $loser_id);
                 }
                 self::incStat(1, "pileSlapOk");
             } else {
                 // # check slap fails
-                foreach ($playersSlap as $fail_player_id) {
+                foreach ($this->slappingPlayers as $fail_player_id) {
                     self::incStat(1, "pileSlapFailed", $fail_player_id);
                     // Move 3rd top of player's cards to the bottom of the board cards pile
                     $card_ids = array_slice($this->cards->getPlayerHand($fail_player_id), -3, 3, true);
                     $this->cards->moveCards($card_ids, 'cardsontable');
                 }
             }
-            self::setGameStateValue("slappingPlayers", array());
-        } else if (empty($playersSlap) && $isSlappable) {
+            $this->slappingPlayers = array();
+        } else if (empty($this->slappingPlayers) && $isSlappable) {
             self::incStat(1, "pileSlapMissed");
         }
     }
@@ -240,16 +243,14 @@ class EgyptianRatscrew extends Table
         self::checkAction("slapPile");
 
         $player_id = self::getCurrentPlayerId();
-//        self::incStat(1, "pileSlap");
 
         // Update slapping player list
-        $slappingPlayers = self::getGameStateValue("slappingPlayers");
-        array_push($slappingPlayers, $player_id);
-        self::setGameStateValue("slappingPlayers", $slappingPlayers);
-
-        self::notifyAllPlayers('slapPile', clienttranslate('${player_name} slapped the pile !'), array(
-            'player_name' => self::getCurrentPlayerName()
-        ));
+        if (!in_array($player_id, $this->slappingPlayers)) {
+            array_push($this->slappingPlayers, $player_id);
+            self::notifyAllPlayers('slapPile', clienttranslate('${player_name} slapped the pile !'), array(
+                'player_name' => self::getCurrentPlayerName()
+            ));
+        }
     }
 
     function playCard()

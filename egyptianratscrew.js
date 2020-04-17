@@ -30,12 +30,12 @@ define([
         return declare("bgagame.egyptianratscrew", ebg.core.gamegui, {
             constructor: function () {
                 console.log('egyptianratscrew constructor');
+                this.cardwidth = 72;
+                this.cardheight = 96;
+
                 // Here, you can init the global variables of your user interface
                 this.tableStock = null;
                 this.playerStocks = [];
-                this.playerHand = null;
-                this.cardwidth = 72;
-                this.cardheight = 96;
 
                 // Array of current dojo connections
                 this.connections = [];
@@ -56,8 +56,8 @@ define([
             setup: function (gamedatas) {
                 console.log("starting game setup");
 
-                var pile = dojo.query("#pile");
-                this.connect(pile, "onclick", "onSlapPile");
+                dojo.connect($("pile"), "onclick", this, "onSlapPile");
+                // dojo.connect($("player_cards_" + this.getActivePlayerId()), "onclick", this, "onPlayCard");
 
                 console.log("start creating card stocks");
 
@@ -258,9 +258,9 @@ define([
 
             */
 
-            onSlapPile: function () {
+            onSlapPile: function (event) {
                 // TODO client-side animation before receiving server confirmation?
-                console.log("Pile slapped");
+                console.log("Pile slapped " + event);
 
                 if (this.checkAction('slapPile', true)) {
                     this.ajaxcall("/egyptianratscrew/egyptianratscrew/slapPile.html", {}, this, function (result) {
@@ -269,9 +269,9 @@ define([
                 }
             },
 
-            onPlayCard: function () {
+            onPlayCard: function (event) {
                 // TODO client-side animation before receiving server confirmation?
-                console.log("Card played");
+                console.log("Card played " + event);
 
                 if (this.checkAction('playCard', true)) {
                     this.ajaxcall("/egyptianratscrew/egyptianratscrew/playCard.html", {}, this, function (result) {
