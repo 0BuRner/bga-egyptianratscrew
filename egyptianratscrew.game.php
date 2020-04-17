@@ -56,7 +56,7 @@ class EgyptianRatscrew extends Table
     */
     function getGameProgression()
     {
-        $nbrPlayersOut = self::getUniqueValueFromDb("SELECT COUNT(*) FROM player WHERE out = 1");
+        $nbrPlayersOut = self::getUniqueValueFromDb("SELECT COUNT(*) FROM player WHERE eliminated = 1");
         $totalPlayers = self::getUniqueValueFromDb("SELECT COUNT(*) FROM player");
 
         return intval(($nbrPlayersOut / $totalPlayers) * 100);   // Note: 0 => 100
@@ -99,7 +99,7 @@ class EgyptianRatscrew extends Table
 
         // Get information about players
         // Note: you can retrieve some extra field you add for "player" table in "dbmodel.sql" if you need it.
-        $dbres = self::DbQuery("SELECT player_id id, player_score score, out, penalty FROM player WHERE 1");
+        $dbres = self::DbQuery("SELECT player_id id, player_score score, eliminated, penalty FROM player WHERE 1");
         while ($player = mysql_fetch_assoc($dbres)) {
             $result['players'][$player['id']] = $player;
         }
@@ -211,13 +211,51 @@ class EgyptianRatscrew extends Table
 
         $player_cards = $this->cards->getPlayerHand($player_id);
         if (count($player_cards) == 0) {
-            self::eliminatePlayer($player_id);
+            $this->eliminatePlayerCustom($player_id);
             return count($player_cards);
         }
         $cards_id = array_slice($player_cards, 0, $nbrOfCards, true);
         $this->cards->moveCards($cards_id, 'cardsontable');
 
         return count($player_cards);
+    }
+
+    private function eliminatePlayerCustom($player_id)
+    {
+        self::DbQuery("UPDATE player SET eliminated=1 WHERE player_id='$player_id'");
+        self::eliminatePlayer($player_id);
+    }
+
+    function getPlayersToDirection()
+    {
+        $result = array();
+
+        $players = self::loadPlayersBasicInfos();
+        $nextPlayer = self::createNextPlayerTable( array_keys( $players ) );
+
+        $current_player = self::getCurrentPlayerId();
+
+        $directions = array( 'S', 'W', 'N', 'E' );
+
+        if( ! isset( $nextPlayer[ $current_player ] ) )
+        {
+            // Spectator mode: take any player for south
+            $player_id = $nextPlayer[0];
+            $result[ $player_id ] = array_shift( $directions );
+        }
+        else
+        {
+            // Normal mode: current player is on south
+            $player_id = $current_player;
+            $result[ $player_id ] = array_shift( $directions );
+        }
+
+        while( count( $directions ) > 0 )
+        {
+            $player_id = $nextPlayer[ $player_id ];
+            $result[ $player_id ] = array_shift( $directions );
+        }
+        return $result;
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -369,7 +407,7 @@ class EgyptianRatscrew extends Table
                 // Update players stats
                 self::incStat(1, "playerEliminated", $active_player_id);
                 // Set eliminated player as out of the table
-                self::DbQuery("UPDATE player SET out=1 WHERE player_id='$player_id'");
+                $this->eliminatePlayerCustom($player_id);
             } else if ($nbrCards == 52) {
                 $this->gamestate->nextState("endGame");
                 return;

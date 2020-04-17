@@ -32,9 +32,9 @@
 
 
 -- add info about first player
-ALTER TABLE `player` ADD `player_first` BOOLEAN NOT NULL DEFAULT '0';
-ALTER TABLE `player` ADD `out` BOOLEAN NOT NULL DEFAULT '0';
-ALTER TABLE `player` ADD `penalty` INTEGER NOT NULL DEFAULT '0';
+ALTER TABLE `player` ADD `player_first` BOOLEAN NOT NULL DEFAULT 0;
+ALTER TABLE `player` ADD `eliminated` BOOLEAN NOT NULL DEFAULT 0;
+ALTER TABLE `player` ADD `penalty` SMALLINT NOT NULL DEFAULT 0;
 
 
 CREATE TABLE IF NOT EXISTS `card` (
