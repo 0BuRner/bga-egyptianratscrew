@@ -59,7 +59,7 @@ $machinestates = array(
         "description" => clienttranslate("Game setup"),
         "type" => "manager",
         "action" => "stGameSetup",
-        "transitions" => array("" => 20)
+        "transitions" => array("" => 10)
     ),
 
     10 => array(
