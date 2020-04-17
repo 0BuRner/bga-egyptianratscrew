@@ -25,22 +25,15 @@
 
 <div id="wrapper">
     <div id="game_table">
-        <div id="pile" class="player_seat">
-            <div>PILE</div>
-        </div>
+        <div id="pile" class="player_seat" style="background-color: rgba(255,255,255,0.5)"></div>
         <!-- BEGIN player -->
-        <div class="player_seat" style="border-top:5px solid #{PLAYER_COLOR}; transform:rotate({ROTATE_ANGLE}deg) translate(0, -300px) rotate(-{ROTATE_ANGLE}deg);">
-            <div class="player_name" style="color:#{PLAYER_COLOR};">
+        <div class="player_seat" style="transform:rotate({ROTATE_ANGLE}deg) translate(0, -300px) rotate(-{ROTATE_ANGLE}deg);">
+            <div class="player_name" style="color:#{PLAYER_COLOR}; border-bottom:5px solid #{PLAYER_COLOR};">
                 {PLAYER_NAME}
             </div>
+            <div id="player_cards_{PLAYER_ID}" class="player_cards"></div>
         </div>
         <!-- END player -->
-    </div>
-</div>
-
-<div id="myhand_wrap" class="whiteblock">
-    <h3>{MY_HAND}</h3>
-    <div id="myhand">
     </div>
 </div>
 

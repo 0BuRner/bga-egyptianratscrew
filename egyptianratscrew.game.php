@@ -95,16 +95,16 @@ class EgyptianRatscrew extends Table
     {
         $result = array('players' => array());
 
-        $player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
-
         // Get information about players
         // Note: you can retrieve some extra field you add for "player" table in "dbmodel.sql" if you need it.
         $dbres = self::DbQuery("SELECT player_id id, player_score score, eliminated, penalty FROM player WHERE 1");
         while ($player = mysql_fetch_assoc($dbres)) {
             $result['players'][$player['id']] = $player;
+            $result['players'][$player['id']]['cards'] = count($this->cards->getPlayerHand($player['id']));
         }
 
         // Cards in player hand
+        $player_id = self::getCurrentPlayerId();
         $result['hand'] = $this->cards->getPlayerHand($player_id);
 
         // Cards played on the table
