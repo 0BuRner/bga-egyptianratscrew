@@ -46,57 +46,44 @@
 
 /** Table layout **/
 
-#playertables {
+#wrapper {
     position: relative;
-    width: 710px;
-    height: 340px;
+    width: 600px;
+    margin: auto auto 110px;
 }
 
-.playertablename {
+#wrapper:after {
+    content: "";
+    display: block;
+    padding-bottom: 100%;
+}
+
+#game_table {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+
+    background-color: transparent;
+    border: 1px solid black;
+    border-radius: 50%;
+}
+
+#pile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.player_name {
     font-weight: bold;
-}
-
-.playertable {
-    position: absolute;
     text-align: center;
-    width: 180px;
-    height: 130px;
 }
 
-.playertable_N {
-    left: 50%;
-    top: 0px;
-    margin-left: -90px; /* half of 180 */
-}
-.playertable_S {
-    left: 50%;
-    bottom: 0px;
-    margin-left: -90px; /* half of 180 */
-}
-.playertable_W {
-    left: 0px;
-    top: 50%;
-    margin-top: -55px; /* half of 130 */
-}
-.playertable_E {
-    right: 0px;
-    top: 50%;
-    margin-top: -55px; /* half of 130 */
-}
-.playertablecard {
-    display: inline-block;
-    position: relative;
-    margin-top: 5px;
-    width: 72px;
-    height: 96px;
-}
-
-/*** cards on table ***/
-
-.cardontable {
+.player_seat {
     position: absolute;
-    width: 72px;
-    height: 96px;
-    background-image: url('egyptianratscrew/img/cards.jpg');
+    top: 50%;
+    left: 230px;
+    width: 150px;
+    height: 100px;
+    background-color: rgba(255, 255, 255, 0.5);
 }
-

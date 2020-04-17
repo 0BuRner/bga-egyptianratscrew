@@ -30,15 +30,10 @@ define([
         return declare("bgagame.egyptianratscrew", ebg.core.gamegui, {
             constructor: function () {
                 console.log('egyptianratscrew constructor');
-
                 // Here, you can init the global variables of your user interface
-                // Example:
-                // this.myGlobalValue = 0;
-
                 this.playerHand = null;
                 this.cardwidth = 72;
                 this.cardheight = 96;
-
             },
 
             /*

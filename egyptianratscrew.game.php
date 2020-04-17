@@ -66,7 +66,7 @@ class EgyptianRatscrew extends Table
     {
         // Set the colors of the players with HTML color code
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
-        $default_color = array("152c81", "cf6402", "018944", "9d0000", "017071", "fff301", "400061", "000000", "8d0073", "703301");
+        $default_color = array("152c81", "cf6402", "1d860a", "9d0000", "017071", "656565", "400061", "000000", "a55796", "703301");
 
         // Create players
         $this->createPlayers($players, $default_color);
@@ -224,38 +224,6 @@ class EgyptianRatscrew extends Table
     {
         self::DbQuery("UPDATE player SET eliminated=1 WHERE player_id='$player_id'");
         self::eliminatePlayer($player_id);
-    }
-
-    function getPlayersToDirection()
-    {
-        $result = array();
-
-        $players = self::loadPlayersBasicInfos();
-        $nextPlayer = self::createNextPlayerTable( array_keys( $players ) );
-
-        $current_player = self::getCurrentPlayerId();
-
-        $directions = array( 'S', 'W', 'N', 'E' );
-
-        if( ! isset( $nextPlayer[ $current_player ] ) )
-        {
-            // Spectator mode: take any player for south
-            $player_id = $nextPlayer[0];
-            $result[ $player_id ] = array_shift( $directions );
-        }
-        else
-        {
-            // Normal mode: current player is on south
-            $player_id = $current_player;
-            $result[ $player_id ] = array_shift( $directions );
-        }
-
-        while( count( $directions ) > 0 )
-        {
-            $player_id = $nextPlayer[ $player_id ];
-            $result[ $player_id ] = array_shift( $directions );
-        }
-        return $result;
     }
 
 //////////////////////////////////////////////////////////////////////////////

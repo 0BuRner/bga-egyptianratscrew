@@ -40,17 +40,21 @@ class view_egyptianratscrew_egyptianratscrew extends game_view
         $players_nbr = count($players);
 
         /*********** Place your code below:  ************/
-
-
-        // Arrange players so that I am on south
-        $player_to_dir = $this->game->getPlayersToDirection();
+        // TODO: Arrange players so that I am on south
 
         $this->page->begin_block("egyptianratscrew_egyptianratscrew", "player");
-        foreach ($player_to_dir as $player_id => $dir) {
-            $this->page->insert_block("player", array("PLAYER_ID" => $player_id,
-                "PLAYER_NAME" => $players[$player_id]['player_name'],
-                "PLAYER_COLOR" => $players[$player_id]['player_color'],
-                "DIR" => $dir));
+        $i = 0;
+        foreach (array_values($players) as $idx => $player) {
+            $player_id = $player['player_id'];
+            $this->page->insert_block("player",
+                array(
+                    "PLAYER_ID" => $player_id,
+                    "PLAYER_NAME" => $players[$player_id]['player_name'],
+                    "PLAYER_COLOR" => $players[$player_id]['player_color'],
+                    "ROTATE_ANGLE" => (360 / $players_nbr) * $i
+                )
+            );
+            $i++;
         }
 
         $this->tpl['MY_HAND'] = self::_("My hand");
