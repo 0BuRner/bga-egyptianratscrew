@@ -77,10 +77,13 @@
     height: 300px !important;
     top: 150px;
     left: 155px;
+
+    cursor: pointer;
 }
 
 #pile > .stockitem {
     top: auto !important;
+    cursor: pointer !important;
 }
 
 .player_name {
@@ -96,5 +99,4 @@
     position: absolute;
     top: 250px; /*50%;*/
     left: 230px;
-    width: 180px;
 }

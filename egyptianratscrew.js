@@ -57,7 +57,8 @@ define([
                 console.log("starting game setup");
 
                 dojo.connect($("pile"), "onclick", this, "onSlapPile");
-                // dojo.connect($("player_cards_" + this.getActivePlayerId()), "onclick", this, "onPlayCard");
+                dojo.connect($("player_cards_" + this.player_id), "onclick", this, "onPlayCard");
+                // TODO dojo.query("player_cards_" + this.player_id + " .stockitem").connect('onclick', this, 'onPlayCard');
 
                 console.log("start creating card stocks");
 
@@ -95,8 +96,6 @@ define([
                     case 'endTurn':
                         this.addTooltip('myhand', _('Cards in my hand'), _('Select a card'));
                         break;
-                    case 'dummmy':
-                        break;
                 }
             },
 
@@ -127,7 +126,7 @@ define([
                 this.tableStock.image_items_per_row = 13;
                 this.tableStock.setOverlap(10,5);
                 this.tableStock.setSelectionMode(0);
-                this.tableStock.centerItems = true;
+                // this.tableStock.centerItems = true;
                 this.tableStock.create(this, $('pile'), this.cardwidth, this.cardheight);
                 // Add back card type
                 this.tableStock.addItemType(-1, 0, g_gamethemeurl + 'img/card_back.png');
@@ -136,7 +135,7 @@ define([
                     for (var value = 2; value <= 14; value++) {
                         // Build card type id
                         var card_type_id = this.getCardUniqueId(color, value);
-                        this.tableStock.addItemType(card_type_id, card_type_id, g_gamethemeurl + 'img/cards.jpg', card_type_id);
+                        this.tableStock.addItemType(card_type_id, 0, g_gamethemeurl + 'img/cards.jpg', card_type_id);
                     }
                 }
             },
@@ -210,9 +209,30 @@ define([
                 this.connections = [];
             },
 
-            // Get card unique identifier based on its color and value
+            /**
+             * Get card unique identifier based on its color and value
+              */
             getCardUniqueId: function (color, value) {
                 return (color - 1) * 13 + (value - 2);
+            },
+
+            showCard: function (card_id) {
+                this.tableStock.addToStockWithId(card_id, card_id);
+            },
+
+            moveTopCardToPile: function (player_id) {
+                let player_stock = this.playerStocks[player_id];
+                let item_id = player_stock.count() - 1;
+                this.slideToObject('player_cards_' + player_id + '_item_' + item_id, 'pile').play();
+                player_stock.removeFromStock(-1);
+            },
+
+            moveBottomCards: function(player_id, nbr_cards, location) {
+                // TODO
+            },
+
+            moveAllCards: function(location, player_id) {
+                // TODO
             },
 
             // playCardOnTable: function (player_id, color, value, card_id) {
@@ -224,7 +244,7 @@ define([
             //             player_id: player_id
             //         }), 'playertablecard_' + player_id);
             //
-            //     if (player_id != this.player_id) {
+            //     if (player_id !== this.player_id) {
             //         // Some opponent played a card
             //         // Move card from player panel
             //         this.placeOnObject('cardontable_' + player_id, 'overall_player_board_' + player_id);
@@ -262,22 +282,14 @@ define([
                 // TODO client-side animation before receiving server confirmation?
                 console.log("Pile slapped " + event);
 
-                if (this.checkAction('slapPile', true)) {
-                    this.ajaxcall("/egyptianratscrew/egyptianratscrew/slapPile.html", {}, this, function (result) {
-                    }, function (is_error) {
-                    });
-                }
+                this.ajaxcall("/egyptianratscrew/egyptianratscrew/slapPile.html", {}, this, function (result) {}, function (is_error) {});
             },
 
             onPlayCard: function (event) {
                 // TODO client-side animation before receiving server confirmation?
                 console.log("Card played " + event);
 
-                if (this.checkAction('playCard', true)) {
-                    this.ajaxcall("/egyptianratscrew/egyptianratscrew/playCard.html", {}, this, function (result) {
-                    }, function (is_error) {
-                    });
-                }
+                this.ajaxcall("/egyptianratscrew/egyptianratscrew/playCard.html", {}, this, function (result) {}, function (is_error) {});
             },
 
             // onPlayerHandSelectionChanged: function () {
@@ -327,10 +339,16 @@ define([
             },
 
             notif_playCard: function (notif) {
-                console.log("Card played" + notif);
+                console.log("NOTIF: Card played " + notif);
+
+                let player_id = notif.args.player_id;
+                let card_id = this.getCardUniqueId(notif.args.color, notif.args.value);
+                this.moveTopCardToPile(player_id);
+                this.showCard(card_id);
             },
             notif_slapPile: function (notif) {
-                console.log("Pile slapped" + notif);
+                console.log("NOTIF: Pile slapped ");
+                console.trace(notif);
             },
 
             // notif_giveAllCardsToPlayer: function (notif) {
