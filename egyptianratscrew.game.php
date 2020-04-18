@@ -279,7 +279,7 @@ class EgyptianRatscrew extends Table
 
         // Checks are done! Play the top card of the current player
         $player_cards = $this->cards->getPlayerHand($player_id);
-        $top_card = array_values($player_cards)[0];
+        $top_card = array_values($player_cards)[count($player_cards)-1];
         $top_card_id = $top_card['id'];
         $this->cards->moveCard($top_card_id, 'cardsontable');
 

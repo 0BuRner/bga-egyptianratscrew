@@ -58,7 +58,7 @@ define([
 
                 dojo.connect($("pile"), "onclick", this, "onSlapPile");
                 dojo.connect($("player_cards_" + this.player_id), "onclick", this, "onPlayCard");
-                // TODO dojo.query("player_cards_" + this.player_id + " .stockitem").connect('onclick', this, 'onPlayCard');
+                // dojo.query("#player_cards_" + this.player_id + " .stockitem").connect('onclick', this, 'onPlayCard');
 
                 console.log("start creating card stocks");
 
@@ -216,15 +216,13 @@ define([
                 return (color - 1) * 13 + (value - 2);
             },
 
-            showCard: function (card_id) {
-                this.tableStock.addToStockWithId(card_id, card_id);
-            },
-
-            moveTopCardToPile: function (player_id) {
+            moveCardToPile: function (player_id, card_id) {
                 let player_stock = this.playerStocks[player_id];
-                let item_id = player_stock.count() - 1;
-                this.slideToObject('player_cards_' + player_id + '_item_' + item_id, 'pile').play();
-                player_stock.removeFromStock(-1);
+                // Slide the card from player to pile and delete it after animation
+                // TODO top card not bottom
+                player_stock.removeFromStock(-1, 'pile');
+                // Add visible card to the pile
+                this.tableStock.addToStockWithId(card_id, card_id);
             },
 
             moveBottomCards: function(player_id, nbr_cards, location) {
@@ -234,35 +232,6 @@ define([
             moveAllCards: function(location, player_id) {
                 // TODO
             },
-
-            // playCardOnTable: function (player_id, color, value, card_id) {
-            //     // player_id => direction
-            //     dojo.place(
-            //         this.format_block('jstpl_cardontable', {
-            //             x: this.cardwidth * (value - 2),
-            //             y: this.cardheight * (color - 1),
-            //             player_id: player_id
-            //         }), 'playertablecard_' + player_id);
-            //
-            //     if (player_id !== this.player_id) {
-            //         // Some opponent played a card
-            //         // Move card from player panel
-            //         this.placeOnObject('cardontable_' + player_id, 'overall_player_board_' + player_id);
-            //     } else {
-            //         // You played a card. If it exists in your hand, move card from there and remove
-            //         // corresponding item
-            //
-            //         if ($('myhand_item_' + card_id)) {
-            //             this.placeOnObject('cardontable_' + player_id, 'myhand_item_' + card_id);
-            //             this.playerHand.removeFromStockById(card_id);
-            //         }
-            //     }
-            //
-            //     // In any case: move it to its final destination
-            //     this.slideToObject('cardontable_' + player_id, 'playertablecard_' + player_id).play();
-            //
-            // },
-
 
             ///////////////////////////////////////////////////
             //// Player's action
@@ -292,32 +261,6 @@ define([
                 this.ajaxcall("/egyptianratscrew/egyptianratscrew/playCard.html", {}, this, function (result) {}, function (is_error) {});
             },
 
-            // onPlayerHandSelectionChanged: function () {
-            //     var items = this.playerHand.getSelectedItems();
-            //
-            //     if (items.length > 0) {
-            //         if (this.checkAction('playCard', true)) {
-            //             // Can play a card
-            //
-            //             var card_id = items[0].id;
-            //
-            //             this.ajaxcall("/egyptianratscrew/egyptianratscrew/playCard.html", {
-            //                 id: card_id,
-            //                 lock: true
-            //             }, this, function (result) {
-            //             }, function (is_error) {
-            //             });
-            //
-            //             this.playerHand.unselectAll();
-            //         } else if (this.checkAction('giveCards')) {
-            //             // Can give cards => let the player select some cards
-            //             this.showMessage(_("You must select exactly 3 cards"), 'error');
-            //         } else {
-            //             this.playerHand.unselectAll();
-            //         }
-            //     }
-            // },
-
             ///////////////////////////////////////////////////
             //// Reaction to cometD notifications
 
@@ -339,40 +282,15 @@ define([
             },
 
             notif_playCard: function (notif) {
-                console.log("NOTIF: Card played " + notif);
+                console.log("NOTIF: Card played");
 
                 let player_id = notif.args.player_id;
                 let card_id = this.getCardUniqueId(notif.args.color, notif.args.value);
-                this.moveTopCardToPile(player_id);
-                this.showCard(card_id);
+                this.moveCardToPile(player_id, card_id);
             },
             notif_slapPile: function (notif) {
-                console.log("NOTIF: Pile slapped ");
-                console.trace(notif);
+                console.log("NOTIF: Pile slapped");
             },
-
-            // notif_giveAllCardsToPlayer: function (notif) {
-            //     // Move all cards on table to given table, then destroy them
-            //     var winner_id = notif.args.player_id;
-            //     for (var player_id in this.gamedatas.players) {
-            //         var anim = this.slideToObject('cardontable_' + player_id, 'overall_player_board_' + winner_id);
-            //         dojo.connect(anim, 'onEnd', function (node) {
-            //             dojo.destroy(node);
-            //         });
-            //         anim.play();
-            //     }
-            // },
-            // notif_newHand: function (notif) {
-            //     // We received a new full hand of 13 cards.
-            //     this.playerHand.removeAll();
-            //
-            //     for (var i in notif.args.cards) {
-            //         var card = notif.args.cards[i];
-            //         var color = card.type;
-            //         var value = card.type_arg;
-            //         this.playerHand.addToStockWithId(this.getCardUniqueId(color, value), card.id);
-            //     }
-            // },
         });
     });
 
