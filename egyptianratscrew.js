@@ -36,6 +36,7 @@ define([
                 // Here, you can init the global variables of your user interface
                 this.tableStock = null;
                 this.playerStocks = [];
+                this.cardsOrder = {};
 
                 // Array of current dojo connections
                 this.connections = [];
@@ -141,10 +142,20 @@ define([
             },
 
             initTableCards: function() {
-                var cardsOnTable = this.gamedatas.cardsontable;
-                for (var i in cardsOnTable) {
-                    var card = cardsOnTable[i];
-                    this.tableStock.addToStockWithId(-1, card.id);
+                // Initialize table cards
+                let cardsOnTable = this.gamedatas.cardsontable;
+                for (let i in cardsOnTable) {
+                    let card = cardsOnTable[i];
+                    let card_id = this.getCardUniqueId(card.type, card.type_arg);
+                    this.cardsOrder[card_id] = card.location_arg;
+                    this.tableStock.addToStockWithId(card_id, card_id);
+                }
+                // Sort cards to keep their play order
+                this.tableStock.changeItemsWeight(this.cardsOrder);
+
+                // Hack: -10 to keep stock order (there are maximum 4 hidden cards on table)
+                for (let j; j < this.gamedatas.hiddenCards; j++) {
+                    this.tableStock.addToStockWithId(-1, j);
                 }
             },
 
@@ -217,8 +228,11 @@ define([
             },
 
             moveCardToPile: function (player_id, card_id) {
-                let player_stock = this.playerStocks[player_id];
+                // Refresh cards order
+                this.tableStock.changeItemsWeight(this.cardsOrder);
+
                 // Slide the card from player to pile and delete it after animation
+                let player_stock = this.playerStocks[player_id];
                 // TODO top card not bottom
                 player_stock.removeFromStock(-1, 'pile');
                 // Add visible card to the pile
@@ -286,6 +300,7 @@ define([
 
                 let player_id = notif.args.player_id;
                 let card_id = this.getCardUniqueId(notif.args.color, notif.args.value);
+                this.cardsOrder[card_id] = notif.args.timestamp;
                 this.moveCardToPile(player_id, card_id);
             },
             notif_slapPile: function (notif) {

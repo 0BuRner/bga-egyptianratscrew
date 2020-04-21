@@ -102,17 +102,23 @@ class EgyptianRatscrew extends Table
         // Get information about players
         // Note: you can retrieve some extra field you add for "player" table in "dbmodel.sql" if you need it.
         $dbres = self::DbQuery("SELECT player_id id, player_score score, eliminated, penalty FROM player WHERE 1");
-        while ($player = mysql_fetch_assoc($dbres)) {
+        while ($player = mysqli_fetch_assoc($dbres)) {
             $result['players'][$player['id']] = $player;
+            // Players only know their number of cards in hand
             $result['players'][$player['id']]['cards'] = count($this->cards->getPlayerHand($player['id']));
         }
 
-        // Cards in player hand
-        $player_id = self::getCurrentPlayerId();
-        $result['hand'] = $this->cards->getPlayerHand($player_id);
-
         // Cards played on the table
-        $result['cardsontable'] = $this->cards->getCardsInLocation('cardsontable');
+        $cards = array();
+        $dbres = self::DbQuery("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, hidden FROM card WHERE card_location = 'cardsontable' ORDER BY card_location_arg");
+        while ($card = mysqli_fetch_assoc($dbres)) {
+            $cards[$card['id']] = $card;
+        }
+
+        $result['cardsontable'] = $this->getCardsOnTableVisible($cards);
+
+        // Cards on the table not visible (first turn)
+        $result['hiddenCards'] = count($this->getCardsOnTableHidden($cards));
 
         return $result;
     }
@@ -167,6 +173,20 @@ class EgyptianRatscrew extends Table
         }
         return $cards;
     }
+
+    private function getCardsOnTableVisible($cards) {
+        return array_filter($cards, function($card) {
+            return $card['hidden'] == 0;
+        });
+    }
+
+    private function getCardsOnTableHidden($cards) {
+        return array_filter($cards, function($card) {
+            return $card['hidden'] == 1;
+        });
+    }
+
+    // TODO on first hand win, make table card not hidden anymore
 
     private function processSlap()
     {
@@ -271,18 +291,23 @@ class EgyptianRatscrew extends Table
             throw new feException(self::_("It was not your turn to play ! You got a penalty of " . $result . " cards !"), true);
         }
 
+        // Check the penalty didn't result to end of game for the player
         if ($this->cards->countCardInLocation('hand', $player_id) == 52) {
             throw new feException(self::_("You won the game"), true);
         } else if ($this->cards->countCardInLocation('hand', $player_id) == 0) {
             throw new feException(self::_("You lost the game"), true);
         }
 
-        // Checks are done! Play the top card of the current player
+        // Play the top card of the current player
         $player_cards = $this->cards->getPlayerHand($player_id);
         $top_card = array_values($player_cards)[count($player_cards)-1];
         $top_card_id = $top_card['id'];
         $this->cards->moveCard($top_card_id, 'cardsontable');
 
+        // Update card location to keep card order (in case of refresh)
+        self::DbQuery("UPDATE card SET card_location_arg=".time()." WHERE card_id='$top_card_id'");
+
+        // Notify all players
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${value_displayed} ${color_displayed}'), array(
             'i18n' => array('color_displayed', 'value_displayed'),
             'card_id' => $top_card_id,
@@ -291,7 +316,8 @@ class EgyptianRatscrew extends Table
             'value' => $top_card['type_arg'],
             'value_displayed' => $this->values_label[$top_card['type_arg']],
             'color' => $top_card['type'],
-            'color_displayed' => $this->colors[$top_card['type']]['name']
+            'color_displayed' => $this->colors[$top_card['type']]['name'],
+            'timestamp' => time()
         ));
 
         // TODO go to temporary state and wait predefined timeout before calling endTurn
@@ -337,8 +363,13 @@ class EgyptianRatscrew extends Table
             $this->cards->pickCards($nbrCardsByPlayer, 'deck', $player_id);
         }
 
-        // Put undealt cards to the table
+        // Put undealt cards to the table as hidden cards
         $this->cards->pickCardsForLocation($nbrCardsOnTable, 'deck', 'cardsontable');
+        $cardsOnTable = $this->cards->getCardsInLocation('cardsontable');
+        foreach ($cardsOnTable as $card_id => $cardOnTable) {
+            $cardOnTable['hidden'] = true;
+            self::DbQuery("UPDATE card SET hidden=1, card_location_arg=". time() ." WHERE card_id='$card_id'");
+        }
 
         // Active first player
         $this->activeNextPlayer();
