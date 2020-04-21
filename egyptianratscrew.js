@@ -57,12 +57,6 @@ define([
             setup: function (gamedatas) {
                 console.log("starting game setup");
 
-                dojo.connect($("pile"), "onclick", this, "onSlapPile");
-                dojo.connect($("player_cards_" + this.player_id), "onclick", this, "onPlayCard");
-                // dojo.query("#player_cards_" + this.player_id + " .stockitem").connect('onclick', this, 'onPlayCard');
-
-                console.log("start creating card stocks");
-
                 // Create cards stocks:
                 this.createTableStock();
                 this.initTableCards();
@@ -72,6 +66,13 @@ define([
                     this.createPlayerStock(player_id);
                     this.initPlayerCards(player_id, nbr_cards);
                 }
+
+                // Setup game actions trigger
+                dojo.connect($("pile"), "onclick", this, "onSlapPile");
+                dojo.connect(this.tableStock, 'onChangeSelection', this, 'onSlapPile');
+
+                dojo.connect($("player_cards_" + this.player_id), "onclick", this, "onPlayCard");
+                dojo.connect(this.playerStocks[this.player_id], 'onChangeSelection', this, 'onPlayCard');
 
                 // Setup game notifications to handle (see "setupNotifications" method below)
                 this.setupNotifications();
@@ -126,7 +127,8 @@ define([
                 this.tableStock = new ebg.stock();
                 this.tableStock.image_items_per_row = 13;
                 this.tableStock.setOverlap(10,5);
-                this.tableStock.setSelectionMode(0);
+                this.tableStock.setSelectionMode(1);
+                this.tableStock.setSelectionAppearance(null);
                 // this.tableStock.centerItems = true;
                 this.tableStock.create(this, $('pile'), this.cardwidth, this.cardheight);
                 // Add back card type
@@ -163,7 +165,8 @@ define([
                 let target = new ebg.stock();
                 target.image_items_per_row = 13;
                 target.setOverlap(10,0);
-                target.setSelectionMode(0);
+                target.setSelectionMode(1);
+                target.setSelectionAppearance(null);
                 target.create(this, $('player_cards_' + player_id), this.cardwidth, this.cardheight);
                 target.addItemType(-1, 0, g_gamethemeurl + 'img/card_back.png');
 
