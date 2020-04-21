@@ -29,7 +29,7 @@ define([
     function (dojo, declare) {
         return declare("bgagame.egyptianratscrew", ebg.core.gamegui, {
             constructor: function () {
-                console.log('egyptianratscrew constructor');
+                console.log('Egyptian Ratscrew constructor');
                 this.cardwidth = 72;
                 this.cardheight = 96;
 
@@ -37,9 +37,6 @@ define([
                 this.tableStock = null;
                 this.playerStocks = [];
                 this.cardsOrder = { '-1': 0 };
-
-                // Array of current dojo connections
-                this.connections = [];
             },
 
             /*
@@ -185,7 +182,9 @@ define([
                 // TODO top card not bottom
                 player_stock.removeFromStock(-1, 'pile');
                 // Add visible card to the pile
-                this.tableStock.addToStockWithId(card_id, card_id);
+                setTimeout(() => {
+                    this.tableStock.addToStockWithId(card_id, card_id);
+                }, 500);
             },
 
             moveBottomCards: function(player_id, nbr_cards, location) {
