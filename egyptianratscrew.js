@@ -170,50 +170,6 @@ define([
             },
 
             /**
-             * Utility to connect and disconnect a single element to/from an event.
-             */
-            connect: function (element, event, handler) {
-                if (element == null) return;
-                this.connections.push({
-                    element: element,
-                    event: event,
-                    handle: dojo.connect(element, event, this, handler)
-                });
-            },
-
-            disconnect: function (element, event) {
-                dojo.forEach(this.connections, function (connection) {
-                    if (connection.element == element && connection.event == event)
-                        dojo.disconnect(connection.handle);
-                });
-            },
-
-            /**
-             * Utility to connect an event to all elements of the same css class.
-             */
-            connectClass: function (className, event, handler) {
-                var list = dojo.query("." + className);
-                for (var i = 0; i < list.length; i++) {
-                    var element = list[i];
-                    this.connections.push({
-                        element: element,
-                        event: event,
-                        handle: dojo.connect(element, event, this, handler)
-                    });
-                }
-            },
-
-            /**
-             * Utility to remove all registered events.
-             */
-            disconnectAll: function () {
-                dojo.forEach(this.connections, function (connection) {
-                    dojo.disconnect(connection.handle);
-                });
-                this.connections = [];
-            },
-
-            /**
              * Get card unique identifier based on its color and value
               */
             getCardUniqueId: function (color, value) {
@@ -289,8 +245,6 @@ define([
             },
 
             notif_playCard: function (notif) {
-                console.log("NOTIF: Card played");
-
                 let player_id = notif.args.player_id;
                 let card_id = this.getCardUniqueId(notif.args.color, notif.args.value);
                 this.cardsOrder[card_id] = notif.args.timestamp;
