@@ -36,7 +36,7 @@ define([
                 // Here, you can init the global variables of your user interface
                 this.tableStock = null;
                 this.playerStocks = [];
-                this.cardsOrder = {};
+                this.cardsOrder = { '-1': 0 };
 
                 // Array of current dojo connections
                 this.connections = [];
@@ -154,7 +154,7 @@ define([
                 this.tableStock.changeItemsWeight(this.cardsOrder);
 
                 // Hack: -10 to keep stock order (there are maximum 4 hidden cards on table)
-                for (let j; j < this.gamedatas.hiddenCards; j++) {
+                for (let j = 0; j < this.gamedatas.hiddenCards; j++) {
                     this.tableStock.addToStockWithId(-1, j);
                 }
             },
