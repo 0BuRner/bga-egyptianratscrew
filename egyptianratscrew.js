@@ -71,7 +71,6 @@ define([
                 dojo.connect($("pile"), "onclick", this, "onSlapPile");
                 dojo.connect(this.tableStock, 'onChangeSelection', this, 'onSlapPile');
 
-                dojo.connect($("player_cards_" + this.player_id), "onclick", this, "onPlayCard");
                 dojo.connect(this.playerStocks[this.player_id], 'onChangeSelection', this, 'onPlayCard');
 
                 // Setup game notifications to handle (see "setupNotifications" method below)
@@ -90,15 +89,6 @@ define([
 
             onEnteringState: function (stateName, args) {
                 console.log('Entering state: ' + stateName);
-
-                switch (stateName) {
-                    case 'playerTurn':
-                        this.addTooltip('myhand', _('Cards in my hand'), _('Play a card'));
-                        break;
-                    case 'endTurn':
-                        this.addTooltip('myhand', _('Cards in my hand'), _('Select a card'));
-                        break;
-                }
             },
 
             // onLeavingState: this method is called each time we are leaving a game state.
