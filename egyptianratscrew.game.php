@@ -292,6 +292,7 @@ class EgyptianRatscrew extends Table
         }
 
         // Check the penalty didn't result to end of game for the player
+        // TODO call processEndGame instead
         if ($this->cards->countCardInLocation('hand', $player_id) == 52) {
             throw new feException(self::_("You won the game"), true);
         } else if ($this->cards->countCardInLocation('hand', $player_id) == 0) {
@@ -319,9 +320,16 @@ class EgyptianRatscrew extends Table
             'color_displayed' => $this->colors[$top_card['type']]['name'],
             'timestamp' => time()
         ));
+    }
 
-        // TODO go to temporary state and wait predefined timeout before calling endTurn
-        $this->gamestate->nextState('endTurn');
+    /**
+     * Called by the client some delay after having played his card
+     */
+    function endTurn()
+    {
+        if (self::getCurrentPlayerId() == self::getActivePlayerId()) {
+            $this->gamestate->nextState('endTurn');
+        }
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -386,8 +394,11 @@ class EgyptianRatscrew extends Table
     function stEndTurn()
     {
         self::debug("state: endTurn");
+
         // check slap was applicable
         $this->processSlap();
+
+        // check challenge
 
         // check and apply player penalty
 

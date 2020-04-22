@@ -47,4 +47,11 @@ class action_egyptianratscrew extends APP_GameAction
         $this->game->slapPile();
         self::ajaxResponse();
     }
+
+    public function endTurn()
+    {
+        self::setAjaxMode();
+        $this->game->endTurn();
+        self::ajaxResponse();
+    }
 }

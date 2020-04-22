@@ -221,6 +221,9 @@ define([
                 console.log("Card played " + event);
 
                 this.ajaxcall("/egyptianratscrew/egyptianratscrew/playCard.html", {}, this, function (result) {}, function (is_error) {});
+                setTimeout(() => {
+                    this.ajaxcall("/egyptianratscrew/egyptianratscrew/endTurn.html", {}, this, function (result) {}, function (is_error) {});
+                }, 2500);
             },
 
             ///////////////////////////////////////////////////
