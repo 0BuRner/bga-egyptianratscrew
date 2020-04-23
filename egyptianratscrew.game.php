@@ -19,9 +19,14 @@
 
 require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
+require_once('modules/slap/slapValidator.php');
+require_once('modules/cardUtils.php');
+
 
 class EgyptianRatscrew extends Table
 {
+    private $slapValidator;
+
     function __construct()
     {
         // Your global variables labels:
@@ -36,6 +41,8 @@ class EgyptianRatscrew extends Table
 
         $this->cards = self::getNew("module.common.deck");
         $this->cards->init("card");
+
+        $this->slapValidator = new SlapValidator();
     }
 
     protected function getGameName()
@@ -223,8 +230,8 @@ class EgyptianRatscrew extends Table
     private function processSlap()
     {
         $cardsOnTable = $this->cards->getCardsInLocation("cardsontable");
-        // TODO call every rules on cards stack
-        $isSlappable = true;
+        // Call every rules on cards stack
+        $isSlappable = $this->slapValidator->isValid($cardsOnTable);
 
         $slappingPlayers = $this->getSlappingPlayers();
         // check someone slap the pile
@@ -371,6 +378,14 @@ class EgyptianRatscrew extends Table
             throw new feException(self::_("You won the game"), true);
         } else if ($this->cards->countCardInLocation('hand', $current_player_id) == 0) {
             throw new feException(self::_("You lost the game"), true);
+        }
+
+        // The pile has been slapped correctly, so the player can take the pile (and still let other players slap/play)
+        $slappingPlayers = $this->getSlappingPlayers();
+        $cardsOnTable = $this->cards->getCardsInLocation("cardsontable");
+        if ($state['name'] == 'playerTurn' && !empty($slappingPlayers) && $this->slapValidator->isValid($cardsOnTable)) {
+            $this->gamestate->nextState('validateTurn');
+            return;
         }
 
         // Play the top card of the current player
