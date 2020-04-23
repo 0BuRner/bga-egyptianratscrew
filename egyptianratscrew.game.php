@@ -274,12 +274,16 @@ class EgyptianRatscrew extends Table
 
     private function processSlapFail($slappingPlayers)
     {
+        // TODO use game variable/constant for nbr of cards instead of hardcoded
+        $penalty = 3;
         // # check slap fails
         foreach ($slappingPlayers as $fail_player_id) {
-            // TODO use game variable/constant for nbr of cards instead of hardcoded
-            // Move 3rd top of player's cards to the bottom of the board cards pile
-            $card_ids = array_column(array_slice($this->cards->getPlayerHand($fail_player_id), -3, 3, true), 'id');
-            $this->cards->moveCards($card_ids, 'cardsontable');
+            // Move X cards of player to the bottom of the table cards pile
+            $cards = CardHelper::getCards($this->cards->getPlayerHand($fail_player_id), $penalty);
+            $cards_id = array_column($cards, 'id');
+            self::debug("Player hand: " . var_export($this->cards->getPlayerHand($fail_player_id), true));
+            self::debug("Penalty cards: " . var_export($cards, true));
+            $this->cards->moveCards($cards_id, 'cardsontable');
 
             self::incStat(1, "pileSlapFailed", $fail_player_id);
         }
@@ -287,7 +291,7 @@ class EgyptianRatscrew extends Table
         self::notifyAllPlayers('slapFailed', clienttranslate('Penalty for ${players_name} who wrongly slapped the pile !'), array(
             'players_id' => $slappingPlayers,
             'players_name' => implode(', ', $this->getSlappingPlayersName($slappingPlayers)),
-            'penalty' => 3
+            'penalty' => $penalty
         ));
     }
 
@@ -390,7 +394,7 @@ class EgyptianRatscrew extends Table
 
         // Play the top card of the current player
         $player_cards = $this->cards->getPlayerHand($current_player_id);
-        $top_card = array_values($player_cards)[count($player_cards)-1];
+        $top_card = CardHelper::getCardAt($player_cards, 1);
         $top_card_id = $top_card['id'];
         $this->cards->moveCard($top_card_id, 'cardsontable');
 
@@ -408,7 +412,7 @@ class EgyptianRatscrew extends Table
             'value_displayed' => $this->values_label[$top_card['type_arg']],
             'color' => $top_card['type'],
             'color_displayed' => $this->colors[$top_card['type']]['name'],
-            'timestamp' => time()
+            'timestamp' => $time_ms
         ));
 
         $this->gamestate->nextState('validateTurn');
@@ -483,6 +487,10 @@ class EgyptianRatscrew extends Table
     function stValidateTurn()
     {
         self::debug("state: validateTurn");
+
+        $cards = $this->cards->getCardsInLocation("cardsontable");
+        self::debug("pile sorted: " . var_export(CardHelper::sortCards($cards), true));
+        self::debug("top card: " . var_export(CardHelper::getCardAt($cards, 0), true));
     }
 
     function stEndTurn()
