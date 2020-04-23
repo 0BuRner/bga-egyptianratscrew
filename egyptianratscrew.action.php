@@ -48,10 +48,10 @@ class action_egyptianratscrew extends APP_GameAction
         self::ajaxResponse();
     }
 
-    public function endTurn()
+    public function validateTurn()
     {
         self::setAjaxMode();
-        $this->game->endTurn();
+        $this->game->validateTurn();
         self::ajaxResponse();
     }
 }

@@ -100,6 +100,14 @@ define([
             //
             onUpdateActionButtons: function (stateName, args) {
                 console.log('onUpdateActionButtons: ' + stateName + ' : ' + args);
+
+                if (this.isCurrentPlayerActive()) {
+                    switch (stateName) {
+                        case 'validateTurn':
+                            this.addActionButton('validateTurn_button', _('Validate turn'), 'onValidateTurn');
+                            break;
+                    }
+                }
             },
 
             ///////////////////////////////////////////////////
@@ -109,6 +117,10 @@ define([
                 Here, you can defines some utility methods that you can use everywhere in your javascript
                 script.
             */
+
+            sleep: function(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            },
 
             createTableStock: function() {
                 this.tableStock = new ebg.stock();
@@ -166,9 +178,10 @@ define([
                 }
             },
 
-            removePlayerCards: function(player_id, nbr_cards) {
+            removePlayerCards: async function(player_id, nbr_cards) {
                 for (let i = 0; i < nbr_cards; i++) {
                     this.playerStocks[player_id].removeFromStock(-1, 'pile');
+                    await this.sleep(150);
                 }
             },
 
@@ -232,9 +245,10 @@ define([
                 console.log("Card played " + event);
 
                 this.ajaxcall("/egyptianratscrew/egyptianratscrew/playCard.html", {}, this, function (result) {}, function (is_error) {});
-                setTimeout(() => {
-                    this.ajaxcall("/egyptianratscrew/egyptianratscrew/endTurn.html", {}, this, function (result) {}, function (is_error) {});
-                }, 2500);
+            },
+
+            onValidateTurn: function (event) {
+                this.ajaxcall("/egyptianratscrew/egyptianratscrew/validateTurn.html", {}, this, function (result) {}, function (is_error) {});
             },
 
             ///////////////////////////////////////////////////

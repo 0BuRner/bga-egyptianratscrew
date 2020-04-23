@@ -343,10 +343,20 @@ class EgyptianRatscrew extends Table
     {
         self::debug("Card played");
 
-        $player_id = self::getCurrentPlayerId();
+        $current_player_id = self::getCurrentPlayerId();
+        $active_player_id = self::getActivePlayerId();
+        $state = $this->gamestate->state();
+
+        // Avoid multiple play from active player
+        if ($state['name'] == 'validateTurn') {
+            if ($current_player_id == $active_player_id) {
+                throw new feException(self::_("You already played a card"), true);
+            }
+        }
 
         // Penalty for playing when it wasn't his turn
-        if ($player_id != self::getActivePlayerId()) {
+        // TODO improve by keeping list of players having already played (like slap) to avoid abusive multiple penalties
+        if ($current_player_id != $active_player_id) {
 //            $result = $this->processPenalty($player_id, 3);
 //            if ($result == 0) {
 //                throw new feException(self::_("No cards remaining. Bye bye !"), true);
@@ -356,14 +366,14 @@ class EgyptianRatscrew extends Table
 
         // Check the penalty didn't result to end of game for the player
         // TODO call processEndGame instead
-        if ($this->cards->countCardInLocation('hand', $player_id) == 52) {
+        if ($this->cards->countCardInLocation('hand', $current_player_id) == 52) {
             throw new feException(self::_("You won the game"), true);
-        } else if ($this->cards->countCardInLocation('hand', $player_id) == 0) {
+        } else if ($this->cards->countCardInLocation('hand', $current_player_id) == 0) {
             throw new feException(self::_("You lost the game"), true);
         }
 
         // Play the top card of the current player
-        $player_cards = $this->cards->getPlayerHand($player_id);
+        $player_cards = $this->cards->getPlayerHand($current_player_id);
         $top_card = array_values($player_cards)[count($player_cards)-1];
         $top_card_id = $top_card['id'];
         $this->cards->moveCard($top_card_id, 'cardsontable');
@@ -376,7 +386,7 @@ class EgyptianRatscrew extends Table
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${value_displayed} ${color_displayed}'), array(
             'i18n' => array('value_displayed'),
             'card_id' => $top_card_id,
-            'player_id' => $player_id,
+            'player_id' => $current_player_id,
             'player_name' => self::getActivePlayerName(),
             'value' => $top_card['type_arg'],
             'value_displayed' => $this->values_label[$top_card['type_arg']],
@@ -384,14 +394,12 @@ class EgyptianRatscrew extends Table
             'color_displayed' => $this->colors[$top_card['type']]['name'],
             'timestamp' => time()
         ));
+
+        $this->gamestate->nextState('validateTurn');
     }
 
-    /**
-     * Called by the client some delay after having played his card
-     */
-    function endTurn()
+    function validateTurn()
     {
-        // TODO check delay is over to avoid cheat
         if (self::getCurrentPlayerId() == self::getActivePlayerId()) {
             $this->gamestate->nextState('endTurn');
         }
@@ -454,6 +462,11 @@ class EgyptianRatscrew extends Table
     function stPlayerTurn()
     {
         self::debug("state: playerTurn");
+    }
+
+    function stValidateTurn()
+    {
+        self::debug("state: validateTurn");
     }
 
     function stEndTurn()
