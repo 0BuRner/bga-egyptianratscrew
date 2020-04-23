@@ -52,6 +52,7 @@ class view_egyptianratscrew_egyptianratscrew extends game_view
                     "PLAYER_NAME" => $players[$player_id]['player_name'],
                     "PLAYER_COLOR" => $players[$player_id]['player_color'],
                     "ROTATE_ANGLE" => (360 / $players_nbr) * $i,
+                    "HAND_ROTATE_ANGLE" => ((360 / $players_nbr) * $i) + 180,
                     "SEAT_WIDTH" => 600 / $players_nbr + 50,
                 )
             );

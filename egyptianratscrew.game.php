@@ -224,7 +224,7 @@ class EgyptianRatscrew extends Table
     {
         $cardsOnTable = $this->cards->getCardsInLocation("cardsontable");
         // TODO call every rules on cards stack
-        $isSlappable = false;
+        $isSlappable = true;
 
         $slappingPlayers = $this->getSlappingPlayers();
         // check someone slap the pile
@@ -379,8 +379,8 @@ class EgyptianRatscrew extends Table
         $this->cards->moveCard($top_card_id, 'cardsontable');
 
         // Update card location to keep card order (in case of refresh)
-        // TODO time() is not accurate enough
-        self::DbQuery("UPDATE card SET card_location_arg=".time()." WHERE card_id='$top_card_id'");
+        $time_ms = round(microtime(true) * 1000);
+        self::DbQuery("UPDATE card SET card_location_arg=".$time_ms." WHERE card_id='$top_card_id'");
 
         // Notify all players
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${value_displayed} ${color_displayed}'), array(

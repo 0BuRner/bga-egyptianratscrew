@@ -67,6 +67,7 @@ define([
                 // Setup game actions trigger
                 dojo.connect($("pile"), "onclick", this, "onSlapPile");
                 dojo.connect(this.tableStock, 'onChangeSelection', this, 'onSlapPile');
+                dojo.connect($("player_hand_" + this.player_id), 'onclick', this, 'onSlapPile');
 
                 dojo.connect(this.playerStocks[this.player_id], 'onChangeSelection', this, 'onPlayCard');
 
@@ -163,7 +164,8 @@ define([
             createPlayerStock: function(player_id) {
                 let target = new ebg.stock();
                 target.image_items_per_row = 13;
-                target.setOverlap(10,0);
+                target.setOverlap(2,0);
+                target.item_margin = 0;
                 target.setSelectionMode(1);
                 target.setSelectionAppearance(null);
                 target.create(this, $('player_cards_' + player_id), this.cardwidth, this.cardheight);

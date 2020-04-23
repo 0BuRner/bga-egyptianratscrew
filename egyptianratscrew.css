@@ -97,6 +97,26 @@
 
 .player_seat {
     position: absolute;
+    width: 140px;
     top: 250px; /*50%;*/
     left: 230px;
+}
+
+.player_hand {
+    width: 60px;
+    height: 77px;
+    position: absolute;
+    left: 85px;
+    top: 35px;
+    z-index: 1000;
+}
+
+.player_hand > div {
+    content: "";
+    position: absolute;
+    display: inline-block;
+    width: 60px;
+    height: 77px;
+    background-image: url('img/hand.png');
+    cursor: pointer;
 }
