@@ -33,7 +33,7 @@ class SlapValidator {
 
         $isValid = false;
         foreach ($this->rules as $rule) {
-            $isValid &= $rule->isSatisfied($cardsStack);
+            $isValid |= $rule->isSatisfied($cardsStack);
         }
         return $isValid;
     }
