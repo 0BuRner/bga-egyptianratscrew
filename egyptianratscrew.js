@@ -61,7 +61,7 @@ define([
                 for (let player_id in gamedatas.players) {
                     let nbr_cards = gamedatas.players[player_id].cards;
                     this.createPlayerStock(player_id);
-                    this.initPlayerCards(player_id, nbr_cards);
+                    this.addPlayerCards(player_id, nbr_cards);
                 }
 
                 // Setup game actions trigger
@@ -160,9 +160,15 @@ define([
                 this.playerStocks[player_id] = target;
             },
 
-            initPlayerCards: function(player_id, nbr_cards) {
+            addPlayerCards: function(player_id, nbr_cards) {
                 for (let i = 0; i < nbr_cards; i++) {
                     this.playerStocks[player_id].addToStockWithId(-1, i);
+                }
+            },
+
+            removePlayerCards: function(player_id, nbr_cards) {
+                for (let i = 0; i < nbr_cards; i++) {
+                    this.playerStocks[player_id].removeFromStock(-1, 'pile');
                 }
             },
 
@@ -187,12 +193,17 @@ define([
                 }, 500);
             },
 
-            moveBottomCards: function(player_id, nbr_cards, location) {
-                // TODO
+            moveCardsToBottomPile: function(player_id, nbr_cards) {
+                this.removePlayerCards(player_id, nbr_cards);
             },
 
-            moveAllCards: function(location, player_id) {
-                // TODO
+            moveAllCardsFromPileToPlayer: function(player_id) {
+                let nbr_cards = this.tableStock.count();
+                this.tableStock.removeAllTo("player_cards_" + player_id);
+                setTimeout(() => {
+                    this.addPlayerCards(player_id, nbr_cards);
+                    this.cardsOrder = { '-1': 0 };
+                }, 500);
             },
 
             ///////////////////////////////////////////////////
@@ -244,6 +255,8 @@ define([
 
                 dojo.subscribe('slapPile', this, "notif_slapPile");
                 dojo.subscribe('playCard', this, "notif_playCard");
+                dojo.subscribe('slapFailed', this, "notif_slapFailed");
+                dojo.subscribe('slapWon', this, "notif_slapWon");
             },
 
             notif_playCard: function (notif) {
@@ -253,7 +266,18 @@ define([
                 this.moveCardToPile(player_id, card_id);
             },
             notif_slapPile: function (notif) {
-                console.log("NOTIF: Pile slapped");
+
+            },
+            notif_slapFailed: function (notif) {
+                let players_id = notif.args.players_id;
+                let penalty = notif.args.penalty;
+                players_id.forEach((player_id) => {
+                    this.moveCardsToBottomPile(player_id, penalty);
+                });
+            },
+            notif_slapWon: function (notif) {
+                let player_id = notif.args.player_id;
+                this.moveAllCardsFromPileToPlayer(player_id);
             },
         });
     });

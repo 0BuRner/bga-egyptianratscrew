@@ -22,8 +22,6 @@ require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
 class EgyptianRatscrew extends Table
 {
-    private $slappingPlayers;
-
     function __construct()
     {
         // Your global variables labels:
@@ -35,8 +33,6 @@ class EgyptianRatscrew extends Table
         parent::__construct();
         self::initGameStateLabels(array(
             "gameLength" => 100));
-
-        $this->slappingPlayers = array();
 
         $this->cards = self::getNew("module.common.deck");
         $this->cards->init("card");
@@ -188,39 +184,104 @@ class EgyptianRatscrew extends Table
 
     // TODO on first hand win, make table card not hidden anymore
 
+    private function getPlayerName($players, $player_id) {
+        return $players[$player_id]['player_name'];
+    }
+
+    private function getSlappingPlayersName($slappingPlayers)
+    {
+        $result = array();
+        $players = self::loadPlayersBasicInfos();
+        foreach ($slappingPlayers as $player_id) {
+            array_push($result, $this->getPlayerName($players, $player_id));
+        }
+        return $result;
+    }
+
+    private function getSlappingPlayers()
+    {
+        $result = array();
+
+        $dbres = self::DbQuery("SELECT player_id id, slap_time FROM player WHERE slap_time IS NOT NULL ORDER BY slap_time ASC");
+        while ($player = mysqli_fetch_assoc($dbres)) {
+            array_push($result, $player['id']);
+        }
+
+        return $result;
+    }
+
+    private function updateSlappingPlayer($player_id)
+    {
+        self::DbQuery("UPDATE player SET slap_time='".(microtime(true) * 10000)."' WHERE player_id='$player_id'");
+    }
+
+    private function resetSlappingPlayers()
+    {
+        self::DbQuery("UPDATE player SET slap_time=NULL WHERE 1");
+    }
+
     private function processSlap()
     {
         $cardsOnTable = $this->cards->getCardsInLocation("cardsontable");
         // TODO call every rules on cards stack
         $isSlappable = false;
 
+        $slappingPlayers = $this->getSlappingPlayers();
         // check someone slap the pile
-        if (!empty($this->slappingPlayers)) {
+        if (!empty($slappingPlayers)) {
             if ($isSlappable) {
-                // # check slap winner
-                $winner_id = array_shift($this->slappingPlayers);
-                // Move cards on the table to the bottom of the player's hand
-                $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
-                self::incStat(1, "pileSlapWon", $winner_id);
-
-                // # check slap losers
-                foreach ($this->slappingPlayers as $loser_id) {
-                    self::incStat(1, "pileSlapLost", $loser_id);
-                }
-                self::incStat(1, "pileSlapOk");
+                $this->processSlapWinner($slappingPlayers);
+                $this->processSlapLosers($slappingPlayers);
             } else {
-                // # check slap fails
-                foreach ($this->slappingPlayers as $fail_player_id) {
-                    self::incStat(1, "pileSlapFailed", $fail_player_id);
-                    // Move 3rd top of player's cards to the bottom of the board cards pile
-                    $card_ids = array_slice($this->cards->getPlayerHand($fail_player_id), -3, 3, true);
-                    $this->cards->moveCards($card_ids, 'cardsontable');
-                }
+                $this->processSlapFail($slappingPlayers);
             }
-            $this->slappingPlayers = array();
-        } else if (empty($this->slappingPlayers) && $isSlappable) {
+            $this->resetSlappingPlayers();
+        } else if (empty($slappingPlayers) && $isSlappable) {
             self::incStat(1, "pileSlapMissed");
         }
+    }
+
+    private function processSlapWinner($slappingPlayers)
+    {
+        // Winner is the fastest player who slap the pile, so the first in the array
+        $winner_id = array_shift($slappingPlayers);
+        // Move cards on the table to the bottom of the player's hand
+        $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
+        // Notify all players about the winner
+        self::notifyAllPlayers('slapWon', clienttranslate('${player_name} won the pile !'), array(
+            'player_id' => $winner_id,
+            'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $winner_id),
+        ));
+        // Increment stats counter
+        self::incStat(1, "pileSlapWon", $winner_id);
+        self::incStat(1, "pileSlapOk");
+    }
+
+    private function processSlapLosers($slappingPlayers)
+    {
+        // # check slap losers
+        foreach ($slappingPlayers as $loser_id) {
+            self::incStat(1, "pileSlapLost", $loser_id);
+        }
+    }
+
+    private function processSlapFail($slappingPlayers)
+    {
+        // # check slap fails
+        foreach ($slappingPlayers as $fail_player_id) {
+            // TODO use game variable/constant for nbr of cards instead of hardcoded
+            // Move 3rd top of player's cards to the bottom of the board cards pile
+            $card_ids = array_column(array_slice($this->cards->getPlayerHand($fail_player_id), -3, 3, true), 'id');
+            $this->cards->moveCards($card_ids, 'cardsontable');
+
+            self::incStat(1, "pileSlapFailed", $fail_player_id);
+        }
+        // Notify all about wrong slap to apply penalty
+        self::notifyAllPlayers('slapFailed', clienttranslate('Penalty for ${players_name} who wrongly slapped the pile !'), array(
+            'players_id' => $slappingPlayers,
+            'players_name' => implode(', ', $this->getSlappingPlayersName($slappingPlayers)),
+            'penalty' => 3
+        ));
     }
 
     private function processChallenge()
@@ -249,6 +310,8 @@ class EgyptianRatscrew extends Table
     {
         self::DbQuery("UPDATE player SET eliminated=1 WHERE player_id='$player_id'");
         self::eliminatePlayer($player_id);
+
+        // TODO check last player standing is winner
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -266,12 +329,12 @@ class EgyptianRatscrew extends Table
 
         $player_id = self::getCurrentPlayerId();
 
+        $slappingPlayers = $this->getSlappingPlayers();
         // Update slapping player list
-        if (!in_array($player_id, $this->slappingPlayers)) {
-            array_push($this->slappingPlayers, $player_id);
-            self::notifyAllPlayers('slapPile', clienttranslate('${player_name} slapped the pile ! ${slaps}'), array(
-                'player_name' => self::getCurrentPlayerName(),
-                'slaps' => implode(';', $this->slappingPlayers)
+        if (!in_array($player_id, $slappingPlayers)) {
+            $this->updateSlappingPlayer($player_id);
+            self::notifyAllPlayers('slapPile', clienttranslate('${player_name} slapped the pile !'), array(
+                'player_name' => self::getCurrentPlayerName()
             ));
         }
     }
@@ -284,11 +347,11 @@ class EgyptianRatscrew extends Table
 
         // Penalty for playing when it wasn't his turn
         if ($player_id != self::getActivePlayerId()) {
-            $result = $this->processPenalty($player_id, 3);
-            if ($result == 0) {
-                throw new feException(self::_("No cards remaining. Bye bye !"), true);
-            }
-            throw new feException(self::_("It was not your turn to play ! You got a penalty of " . $result . " cards !"), true);
+//            $result = $this->processPenalty($player_id, 3);
+//            if ($result == 0) {
+//                throw new feException(self::_("No cards remaining. Bye bye !"), true);
+//            }
+            throw new feException(self::_("It was not your turn to play ! You got a penalty !"), true);
         }
 
         // Check the penalty didn't result to end of game for the player
@@ -306,11 +369,12 @@ class EgyptianRatscrew extends Table
         $this->cards->moveCard($top_card_id, 'cardsontable');
 
         // Update card location to keep card order (in case of refresh)
+        // TODO time() is not accurate enough
         self::DbQuery("UPDATE card SET card_location_arg=".time()." WHERE card_id='$top_card_id'");
 
         // Notify all players
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${value_displayed} ${color_displayed}'), array(
-            'i18n' => array('color_displayed', 'value_displayed'),
+            'i18n' => array('value_displayed'),
             'card_id' => $top_card_id,
             'player_id' => $player_id,
             'player_name' => self::getActivePlayerName(),
@@ -327,6 +391,7 @@ class EgyptianRatscrew extends Table
      */
     function endTurn()
     {
+        // TODO check delay is over to avoid cheat
         if (self::getCurrentPlayerId() == self::getActivePlayerId()) {
             $this->gamestate->nextState('endTurn');
         }
