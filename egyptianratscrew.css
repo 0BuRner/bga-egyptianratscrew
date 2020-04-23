@@ -69,10 +69,12 @@
 }
 
 #pile {
+    position: absolute;
     display: flex;
     justify-content: center;
     align-items: center;
 
+    background-color: rgba(255,255,255,0.5);
     width: 300px !important;
     height: 300px !important;
     top: 150px;
@@ -100,6 +102,7 @@
     width: 140px;
     top: 250px; /*50%;*/
     left: 230px;
+    z-index: 100;
 }
 
 .player_hand {
@@ -108,13 +111,12 @@
     position: absolute;
     left: 85px;
     top: 35px;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .player_hand > div {
     content: "";
     position: absolute;
-    display: inline-block;
     width: 60px;
     height: 77px;
     background-image: url('img/hand.png');

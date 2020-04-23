@@ -334,7 +334,8 @@ class EgyptianRatscrew extends Table
         if (!in_array($player_id, $slappingPlayers)) {
             $this->updateSlappingPlayer($player_id);
             self::notifyAllPlayers('slapPile', clienttranslate('${player_name} slapped the pile !'), array(
-                'player_name' => self::getCurrentPlayerName()
+                'player_name' => self::getCurrentPlayerName(),
+                'player_id' => $player_id
             ));
         }
     }

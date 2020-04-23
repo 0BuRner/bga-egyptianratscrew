@@ -34,9 +34,11 @@ define([
                 this.cardheight = 96;
 
                 // Here, you can init the global variables of your user interface
+                this.players = [];
                 this.tableStock = null;
                 this.playerStocks = [];
                 this.cardsOrder = { '-1': 0 };
+                this.slapCounter = 0;
             },
 
             /*
@@ -58,6 +60,8 @@ define([
                 this.createTableStock();
                 this.initTableCards();
 
+                this.players = gamedatas.players;
+
                 for (let player_id in gamedatas.players) {
                     let nbr_cards = gamedatas.players[player_id].cards;
                     this.createPlayerStock(player_id);
@@ -65,8 +69,8 @@ define([
                 }
 
                 // Setup game actions trigger
-                dojo.connect($("pile"), "onclick", this, "onSlapPile");
-                dojo.connect(this.tableStock, 'onChangeSelection', this, 'onSlapPile');
+                // dojo.connect($("pile"), "onclick", this, "onSlapPile");
+                // dojo.connect(this.tableStock, 'onChangeSelection', this, 'onSlapPile');
                 dojo.connect($("player_hand_" + this.player_id), 'onclick', this, 'onSlapPile');
 
                 dojo.connect(this.playerStocks[this.player_id], 'onChangeSelection', this, 'onPlayCard');
@@ -94,6 +98,17 @@ define([
             //
             onLeavingState: function (stateName) {
                 console.log('Leaving state: ' + stateName);
+
+                switch (stateName) {
+                    case 'validateTurn':
+                        // reset hands position
+                        for (let player_id in this.players) {
+                            // position must match 'top' and 'left' values in css
+                            this.slideToObjectPos("player_hand_" + player_id, "player_seat_" + player_id, 85, 35).play();
+                        }
+                        this.slapCounter = 0;
+                        break;
+                }
             },
 
             // onUpdateActionButtons: in this method you can manage "action buttons" that are displayed in the
@@ -282,7 +297,15 @@ define([
                 this.moveCardToPile(player_id, card_id);
             },
             notif_slapPile: function (notif) {
+                let player_id = notif.args.player_id;
+                let hand_id = "player_hand_" + player_id;
 
+                // adjust z-index to keep hand order
+                dojo.style(hand_id, 'z-index', this.slapCounter + 100);
+                dojo.style('player_seat_' + player_id, 'z-index', this.slapCounter + 100);
+                this.slapCounter++;
+                // animation
+                this.slideToObject(hand_id, "pile", 100).play();
             },
             notif_slapFailed: function (notif) {
                 let players_id = notif.args.players_id;

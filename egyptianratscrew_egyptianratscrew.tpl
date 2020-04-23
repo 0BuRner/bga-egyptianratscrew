@@ -25,9 +25,9 @@
 
 <div id="wrapper">
     <div id="game_table">
-        <div id="pile" class="player_seat" style="background-color: rgba(255,255,255,0.5)"></div>
+        <div id="pile"></div>
         <!-- BEGIN player -->
-        <div class="player_seat" style="transform:rotate({ROTATE_ANGLE}deg) translate(0, -300px) rotate(-{ROTATE_ANGLE}deg);">
+        <div id="player_seat_{PLAYER_ID}" class="player_seat" style="transform:rotate({ROTATE_ANGLE}deg) translate(0, -300px) rotate(-{ROTATE_ANGLE}deg);">
             <div id="player_hand_{PLAYER_ID}" class="player_hand">
                 <div style="transform: rotate({HAND_ROTATE_ANGLE}deg);"></div>
             </div>
