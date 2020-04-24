@@ -72,12 +72,12 @@ class DbUtils
 
     public static function updateCardPlayTime($card_id, $timestamp)
     {
-        Table::DbQuery("UPDATE card SET play_time=".$timestamp." WHERE card_id='$card_id'");
+        Table::DbQuery("UPDATE card SET play_time=" . $timestamp . " WHERE card_id='$card_id'");
     }
 
     public static function initCardsPlayTime($timestamp)
     {
-        Table::DbQuery("UPDATE card SET play_time=".$timestamp." WHERE 1");
+        Table::DbQuery("UPDATE card SET play_time=" . $timestamp . " WHERE 1");
     }
 
     public static function incrementScore($player_id)

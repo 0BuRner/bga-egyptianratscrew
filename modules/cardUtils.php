@@ -22,7 +22,6 @@ class CardHelper
      */
     public static function getCards($cards, $nbr, $order = 1)
     {
-        $cards = self::sortCards($cards);
         if ($order == self::$ORDER['BOTTOM']) {
             return array_slice($cards, $nbr, -$nbr, true);
         } else {
@@ -38,7 +37,6 @@ class CardHelper
      */
     public static function getCardAt($cards, $index, $order = 1)
     {
-        $cards = self::sortCards($cards);
         if ($order == self::$ORDER['TOP']) {
             return array_values($cards)[count($cards) - 1 - $index];
         } else {
@@ -49,5 +47,20 @@ class CardHelper
     static function comparator($card1, $card2)
     {
         return $card1['play_time'] > $card2['play_time'];
+    }
+
+    public static function cardStr($card)
+    {
+        $type = array(1 => "♠", 2 => "♥", 3 => "♣", 4 => "♦");
+        return $card['type_arg'] . " " . $type[$card['type']];
+    }
+
+    public static function cardsStr($cards)
+    {
+        $str = "";
+        foreach ($cards as $card) {
+            $str .= self::cardStr($card) . " | ";
+        }
+        return $str;
     }
 }

@@ -420,7 +420,7 @@ class EgyptianRatscrew extends Table
 
         // Play the top card of the current player
         $player_cards = DbUtils::getCards("hand", $current_player_id);
-        $top_card = CardHelper::getCardAt($player_cards, 0);
+        $top_card = CardHelper::getCardAt($player_cards, 0, 0);
         $top_card_id = $top_card['id'];
         $this->cards->moveCard($top_card_id, 'cardsontable');
 
