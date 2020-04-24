@@ -28,10 +28,6 @@ class EgyptianRatscrew extends Table
 {
     private $slapValidator;
 
-    private $challengeInProgress;
-    private $challengeTry;
-    private $challengeMaxTry;
-
     function __construct()
     {
         // Your global variables labels:
@@ -42,14 +38,15 @@ class EgyptianRatscrew extends Table
         // Note: afterwards, you can get/set the global variables with getGameStateValue/setGameStateInitialValue/setGameStateValue
         parent::__construct();
         self::initGameStateLabels(array(
+            "challengeInProgress" => 10,
+            "challengeMaxTry" => 11,
+            "challengeTry" => 12,
             "gameLength" => 100));
 
         $this->cards = self::getNew("module.common.deck");
         $this->cards->init("card");
 
         $this->slapValidator = new SlapValidator();
-        $this->challengeInProgress = false;
-        $this->challengeTry = 0;
     }
 
     protected function getGameName()
@@ -88,6 +85,9 @@ class EgyptianRatscrew extends Table
         $this->initStats();
 
         // Init game variables
+        self::setGameStateInitialValue("challengeInProgress", 0);
+        self::setGameStateInitialValue("challengeMaxTry", 0);
+        self::setGameStateInitialValue("challengeTry", 0);
 
         // Create cards
         $this->cards->createCards($this->createCards(), 'deck');
@@ -214,7 +214,7 @@ class EgyptianRatscrew extends Table
     private function resetSlappingPlayers()
     {
         self::DbQuery("UPDATE player SET slap_time=NULL WHERE 1");
-        $this->challengeInProgress = false;
+        self::setGameStateValue("challengeInProgress", 0);
     }
 
     private function processSlap()
@@ -271,8 +271,8 @@ class EgyptianRatscrew extends Table
             // Move X cards of player to the bottom of the table cards pile
             $cards = CardHelper::getCards($this->cards->getPlayerHand($fail_player_id), $penalty);
             $cards_id = array_column($cards, 'id');
-            self::debug("Player hand: " . var_export($this->cards->getPlayerHand($fail_player_id), true));
-            self::debug("Penalty cards: " . var_export($cards, true));
+//            self::debug("Player hand: " . var_export($this->cards->getPlayerHand($fail_player_id), true));
+//            self::debug("Penalty cards: " . var_export($cards, true));
             $this->cards->moveCards($cards_id, 'cardsontable');
 
             self::incStat(1, "pileSlapFailed", $fail_player_id);
@@ -294,31 +294,34 @@ class EgyptianRatscrew extends Table
         }
 
         $card = CardHelper::getCardAt($cardsOnTable, 0);
+
         if ($card['type_arg'] > 10) {
-            $this->challengeInProgress = true;
-            $this->challengeMaxTry = $this->challenge_values[$card['type_arg']];
-            $this->challengeTry = 0;
+            self::setGameStateValue("challengeInProgress", 1);
+            self::setGameStateValue("challengeMaxTry", $this->challenge_values[$card['type_arg']]);
+            self::setGameStateValue("challengeTry", 0);
         } else {
-            if ($this->challengeInProgress) {
-                if ($this->challengeTry == $this->challengeMaxTry) {
-                    // Challenge ended
-                    $this->challengeInProgress = false;
+            if (self::getGameStateValue("challengeInProgress") == 0) {
+                return;
+            }
 
-                    // TODO move cards for challenge lost (make this a function)
-                    $winner_id = self::getPlayerBefore(self::getActivePlayerId())['player_id'];
-                    $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
-                    // Notify all players about the winner
-                    self::notifyAllPlayers('slapWon', clienttranslate('${player_name} won the pile !'), array(
-                        'player_id' => $winner_id,
-                        'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $winner_id),
-                    ));
+            if (self::getGameStateValue("challengeTry") < self::getGameStateValue("challengeMaxTry") - 1) {
+                // Challenge in progress
+                self::incGameStateValue("challengeTry", 1);
+            } else {
+                // Challenge ended
+                self::setGameStateValue("challengeInProgress", 0);
 
-                    self::incStat(1, "challengeWon", $winner_id);
-                    self::incStat(1, "challengeLost", self::getActivePlayerId());
-                } else {
-                    // Challenge in progress
-                    $this->challengeTry++;
-                }
+                // TODO move cards for challenge lost (make this a function)
+                $winner_id = self::getPlayerBefore(self::getActivePlayerId());
+                $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
+                // Notify all players about the winner
+                self::notifyAllPlayers('slapWon', clienttranslate('${player_name} won the pile !'), array(
+                    'player_id' => $winner_id,
+                    'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $winner_id),
+                ));
+
+                self::incStat(1, "challengeWon", $winner_id);
+                self::incStat(1, "challengeLost", self::getActivePlayerId());
             }
         }
     }
@@ -513,11 +516,6 @@ class EgyptianRatscrew extends Table
     function stValidateTurn()
     {
         self::debug("state: validateTurn");
-
-        $cards = DbUtils::getCards("cardsontable");
-        self::debug("pile sorted: " . var_export(CardHelper::sortCards($cards), true));
-        self::debug("top card: " . var_export(CardHelper::getCardAt($cards, 0), true));
-        self::debug("player cards: " . var_export(DbUtils::getCards("hand", self::getPlayerAfter(self::getActivePlayerId())['player_id']), true));
     }
 
     function stEndTurn()
@@ -557,9 +555,13 @@ class EgyptianRatscrew extends Table
         // update stats
         // TODO?
 
-        // Same player play if challenge is in progress
-        if (!$this->challengeInProgress) {
+        // Change active player depending on challenge state
+        if (self::getGameStateValue("challengeInProgress") == 0) {
             $this->activeNextPlayer();
+        } else {
+            if (self::getGameStateValue("challengeTry") == 0 || self::getGameStateValue("challengeTry") >= self::getGameStateValue("challengeMaxTry")) {
+                $this->activeNextPlayer();
+            }
         }
 
         $this->gamestate->nextState("playerTurn");
