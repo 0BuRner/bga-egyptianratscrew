@@ -21,13 +21,13 @@
 
 
 $this->colors = array(
-    1 => array( 'name' => "\u{2660}",
+    1 => array( 'name' => "\u{2660}", // ♠
                 'nametr' => "\u{2660}"),
-    2 => array( 'name' => "\u{2665}",
+    2 => array( 'name' => "\u{2665}", // ♥
                 'nametr' => "\u{2665}"),
-    3 => array( 'name' => "\u{2663}",
+    3 => array( 'name' => "\u{2663}", // ♣
                 'nametr' => "\u{2663}"),
-    4 => array( 'name' => "\u{2666}",
+    4 => array( 'name' => "\u{2666}", // ♦
                 'nametr' => "\u{2666}")
 );
 
