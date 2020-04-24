@@ -164,7 +164,7 @@ define([
                 for (let i in cardsOnTable) {
                     let card = cardsOnTable[i];
                     let card_id = this.getCardUniqueId(card.type, card.type_arg);
-                    this.cardsOrder[card_id] = card.location_arg;
+                    this.cardsOrder[card_id] = card.play_time;
                     this.tableStock.addToStockWithId(card_id, card_id);
                 }
                 // Sort cards to keep their play order

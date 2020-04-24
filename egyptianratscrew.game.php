@@ -21,11 +21,16 @@ require_once(APP_GAMEMODULE_PATH . 'module/table/table.game.php');
 
 require_once('modules/slap/slapValidator.php');
 require_once('modules/cardUtils.php');
+require_once('modules/dbUtils.php');
 
 
 class EgyptianRatscrew extends Table
 {
     private $slapValidator;
+
+    private $challengeInProgress;
+    private $challengeTry;
+    private $challengeMaxTry;
 
     function __construct()
     {
@@ -43,6 +48,8 @@ class EgyptianRatscrew extends Table
         $this->cards->init("card");
 
         $this->slapValidator = new SlapValidator();
+        $this->challengeInProgress = false;
+        $this->challengeTry = 0;
     }
 
     protected function getGameName()
@@ -84,6 +91,7 @@ class EgyptianRatscrew extends Table
 
         // Create cards
         $this->cards->createCards($this->createCards(), 'deck');
+        DbUtils::initCardsPlayTime($this->getTime());
         /************ End of the game initialization *****/
     }
 
@@ -103,20 +111,10 @@ class EgyptianRatscrew extends Table
         $result = array('players' => array());
 
         // Get information about players
-        // Note: you can retrieve some extra field you add for "player" table in "dbmodel.sql" if you need it.
-        $dbres = self::DbQuery("SELECT player_id id, player_score score, eliminated, penalty FROM player WHERE 1");
-        while ($player = mysqli_fetch_assoc($dbres)) {
-            $result['players'][$player['id']] = $player;
-            // Players only know their number of cards in hand
-            $result['players'][$player['id']]['cards'] = count($this->cards->getPlayerHand($player['id']));
-        }
+        $result['players'] = DbUtils::getPlayersState();
 
         // Cards played on the table
-        $cards = array();
-        $dbres = self::DbQuery("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, hidden FROM card WHERE card_location = 'cardsontable'");
-        while ($card = mysqli_fetch_assoc($dbres)) {
-            $cards[$card['id']] = $card;
-        }
+        $cards = DbUtils::getCards("cardsontable");
 
         $result['cardsontable'] = $this->getCardsOnTableVisible($cards);
 
@@ -149,17 +147,8 @@ class EgyptianRatscrew extends Table
     private function createPlayers($players, $colors)
     {
         // Clean up
-        self::DbQuery("DELETE FROM player WHERE 1");
-
-        // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialized it there.
-        $sql = "INSERT INTO player (player_id, player_score, player_color, player_canal, player_name, player_avatar) VALUES ";
-        $values = array();
-        foreach ($players as $player_id => $player) {
-            $color = array_shift($colors);
-            $values[] = "('" . $player_id . "','0','$color','" . $player['player_canal'] . "','" . addslashes($player['player_name']) . "','" . addslashes($player['player_avatar']) . "')";
-        }
-        $sql .= implode(',', $values);
-        self::DbQuery($sql);
+        DbUtils::cleanPlayerTable();
+        DbUtils::createPlayers($players, $colors);
 
         self::reloadPlayersBasicInfos();
     }
@@ -219,17 +208,18 @@ class EgyptianRatscrew extends Table
 
     private function updateSlappingPlayer($player_id)
     {
-        self::DbQuery("UPDATE player SET slap_time='".(microtime(true) * 10000)."' WHERE player_id='$player_id'");
+        self::DbQuery("UPDATE player SET slap_time='". $this->getTime() ."' WHERE player_id='$player_id'");
     }
 
     private function resetSlappingPlayers()
     {
         self::DbQuery("UPDATE player SET slap_time=NULL WHERE 1");
+        $this->challengeInProgress = false;
     }
 
     private function processSlap()
     {
-        $cardsOnTable = $this->cards->getCardsInLocation("cardsontable");
+        $cardsOnTable = DbUtils::getCards("cardsontable");
         // Call every rules on cards stack
         $isSlappable = $this->slapValidator->isValid($cardsOnTable);
 
@@ -297,9 +287,40 @@ class EgyptianRatscrew extends Table
 
     private function processChallenge()
     {
-//        // Pick "$nbr" cards from a "pile" location (ex: "deck") and place them in the "hand" of specified player.
-//        $this->cards->pickCards($nbr, $location, $player_id);
+        $cardsOnTable = DbUtils::getCards("cardsontable");
 
+        if (count($cardsOnTable) == 0) {
+            return;
+        }
+
+        $card = CardHelper::getCardAt($cardsOnTable, 0);
+        if ($card['type_arg'] > 10) {
+            $this->challengeInProgress = true;
+            $this->challengeMaxTry = $this->challenge_values[$card['type_arg']];
+            $this->challengeTry = 0;
+        } else {
+            if ($this->challengeInProgress) {
+                if ($this->challengeTry == $this->challengeMaxTry) {
+                    // Challenge ended
+                    $this->challengeInProgress = false;
+
+                    // TODO move cards for challenge lost (make this a function)
+                    $winner_id = self::getPlayerBefore(self::getActivePlayerId())['player_id'];
+                    $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
+                    // Notify all players about the winner
+                    self::notifyAllPlayers('slapWon', clienttranslate('${player_name} won the pile !'), array(
+                        'player_id' => $winner_id,
+                        'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $winner_id),
+                    ));
+
+                    self::incStat(1, "challengeWon", $winner_id);
+                    self::incStat(1, "challengeLost", self::getActivePlayerId());
+                } else {
+                    // Challenge in progress
+                    $this->challengeTry++;
+                }
+            }
+        }
     }
 
     private function processPenalty($player_id, $nbrOfCards)
@@ -323,6 +344,11 @@ class EgyptianRatscrew extends Table
         self::eliminatePlayer($player_id);
 
         // TODO check last player standing is winner
+    }
+
+    private function getTime()
+    {
+        return round(microtime(true) * 1000);
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -386,21 +412,21 @@ class EgyptianRatscrew extends Table
 
         // The pile has been slapped correctly, so the player can take the pile (and still let other players slap/play)
         $slappingPlayers = $this->getSlappingPlayers();
-        $cardsOnTable = $this->cards->getCardsInLocation("cardsontable");
+        $cardsOnTable = DbUtils::getCards("cardsontable");
         if ($state['name'] == 'playerTurn' && !empty($slappingPlayers) && $this->slapValidator->isValid($cardsOnTable)) {
             $this->gamestate->nextState('validateTurn');
             return;
         }
 
         // Play the top card of the current player
-        $player_cards = $this->cards->getPlayerHand($current_player_id);
-        $top_card = CardHelper::getCardAt($player_cards, 1);
+        $player_cards = DbUtils::getCards("hand", $current_player_id);
+        $top_card = CardHelper::getCardAt($player_cards, 0);
         $top_card_id = $top_card['id'];
         $this->cards->moveCard($top_card_id, 'cardsontable');
 
         // Update card location to keep card order (in case of refresh)
-        $time_ms = round(microtime(true) * 1000);
-        self::DbQuery("UPDATE card SET card_location_arg=".$time_ms." WHERE card_id='$top_card_id'");
+        $time_ms = $this->getTime();
+        DbUtils::updateCardPlayTime($top_card_id, $time_ms);
 
         // Notify all players
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${value_displayed} ${color_displayed}'), array(
@@ -466,10 +492,10 @@ class EgyptianRatscrew extends Table
 
         // Put undealt cards to the table as hidden cards
         $this->cards->pickCardsForLocation($nbrCardsOnTable, 'deck', 'cardsontable');
-        $cardsOnTable = $this->cards->getCardsInLocation('cardsontable');
+        $cardsOnTable = DbUtils::getCards('cardsontable');
         foreach ($cardsOnTable as $card_id => $cardOnTable) {
             $cardOnTable['hidden'] = true;
-            self::DbQuery("UPDATE card SET hidden=1, card_location_arg=". time() ." WHERE card_id='$card_id'");
+            self::DbQuery("UPDATE card SET hidden=1, play_time=". $this->getTime() ." WHERE card_id='$card_id'");
         }
 
         // Active first player
@@ -488,9 +514,10 @@ class EgyptianRatscrew extends Table
     {
         self::debug("state: validateTurn");
 
-        $cards = $this->cards->getCardsInLocation("cardsontable");
+        $cards = DbUtils::getCards("cardsontable");
         self::debug("pile sorted: " . var_export(CardHelper::sortCards($cards), true));
         self::debug("top card: " . var_export(CardHelper::getCardAt($cards, 0), true));
+        self::debug("player cards: " . var_export(DbUtils::getCards("hand", self::getPlayerAfter(self::getActivePlayerId())['player_id']), true));
     }
 
     function stEndTurn()
@@ -501,6 +528,7 @@ class EgyptianRatscrew extends Table
         $this->processSlap();
 
         // check challenge
+        $this->processChallenge();
 
         // check and apply player penalty
 
@@ -511,11 +539,11 @@ class EgyptianRatscrew extends Table
         $players = self::loadPlayersBasicInfos();
         $active_player_id = self::getActivePlayerId();
         foreach ($players as $player_id => $player) {
-            $cards = $this->cards->getPlayerHand($player_id);
+            $cards = DbUtils::getCards("hand", $player_id);
             $nbrCards = count($cards);
             if ($nbrCards == 0) {
                 // Update winner score
-                self::DbQuery("UPDATE player SET player_score=player_score+1 WHERE player_id='$active_player_id'");
+                DbUtils::incrementScore($active_player_id);
                 // Update players stats
                 self::incStat(1, "playerEliminated", $active_player_id);
                 // Set eliminated player as out of the table
@@ -529,7 +557,10 @@ class EgyptianRatscrew extends Table
         // update stats
         // TODO?
 
-        $this->activeNextPlayer();
+        // Same player play if challenge is in progress
+        if (!$this->challengeInProgress) {
+            $this->activeNextPlayer();
+        }
 
         $this->gamestate->nextState("playerTurn");
     }

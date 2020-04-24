@@ -48,6 +48,6 @@ class CardHelper
 
     static function comparator($card1, $card2)
     {
-        return $card1['location_arg'] > $card2['location_arg'];
+        return $card1['play_time'] > $card2['play_time'];
     }
 }
