@@ -16,7 +16,7 @@ class DbUtils
         }
 
         if ($order != null) {
-            $query .= "ORDER BY play_time " . $order;
+            $query .= "ORDER BY play_time " . $order . ", id " . $order;
         }
 
         $result = Table::DbQuery($query);
