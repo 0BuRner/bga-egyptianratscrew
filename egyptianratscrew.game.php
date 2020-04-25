@@ -573,8 +573,6 @@ class EgyptianRatscrew extends Table
         // check challenge
         $this->processChallenge();
 
-        // check and apply player penalty
-
         // check end game
 
 
@@ -585,12 +583,14 @@ class EgyptianRatscrew extends Table
             $cards = DbUtils::getCards("hand", $player_id);
             $nbrCards = count($cards);
             if ($nbrCards == 0) {
-                // Update winner score
-                DbUtils::incrementScore($active_player_id);
-                // Update players stats
-                self::incStat(1, "playerEliminated", $active_player_id);
-                // Set eliminated player as out of the table
-                $this->eliminatePlayerCustom($player_id);
+                if (DbUtils::getPlayersState()[$player_id]['eliminated'] == 0) {
+                    // Update winner score
+                    DbUtils::incrementScore($active_player_id);
+                    // Update players stats
+                    self::incStat(1, "playerEliminated", $active_player_id);
+                    // Set eliminated player as out of the table
+                    $this->eliminatePlayerCustom($player_id);
+                }
             } else if ($nbrCards == 52) {
                 $this->gamestate->nextState("endGame");
                 return;
@@ -612,12 +612,6 @@ class EgyptianRatscrew extends Table
         $this->gamestate->nextState("playerTurn");
     }
 
-    function stZombieTurn()
-    {
-        $this->activeNextPlayer();
-        $this->gamestate->nextState("playerTurn");
-    }
-
 //////////////////////////////////////////////////////////////////////////////
 //////////// Zombie
 ////////////
@@ -631,12 +625,11 @@ class EgyptianRatscrew extends Table
     */
     function zombieTurn($state, $active_player)
     {
-        $statename = $state['name'];
-
-        if ($statename == 'validateTurn' || $statename == 'playerTurn' || $statename == 'endTurn' || $statename == 'zombiePass') {
-            $this->gamestate->nextState("zombiePass");
+        if (array_key_exists('zombiePass', $state['transitions'])) {
+            $this->gamestate->nextState('zombiePass');
         } else {
-            throw new BgaVisibleSystemException("Zombie mode not supported at this game state: " . $statename);
+            // Zombie always play a card(s)
+            $this->playCard();
         }
     }
 }
