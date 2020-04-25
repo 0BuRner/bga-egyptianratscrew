@@ -360,35 +360,54 @@ class EgyptianRatscrew extends Table
         }
     }
 
+    private function checkPlayerEliminated()
+    {
+        $players = DbUtils::getPlayersState();
+        $active_player_id = self::getActivePlayerId();
+
+        foreach ($players as $player_id => $player) {
+            if ($player['eliminated'] == 1) {
+                continue;
+            }
+
+            $cards = DbUtils::getCards("hand", $player_id);
+            $nbrPlayerCards = count($cards);
+
+            if ($nbrPlayerCards == 0) {
+                // Update winner score
+                DbUtils::incrementScore($active_player_id);
+                // Update players stats
+                self::incStat(1, "playerEliminated", $active_player_id);
+                // Set eliminated player as out of the table
+                $this->eliminatePlayerCustom($player_id);
+            }
+        }
+    }
+
     private function checkGameEnd()
     {
-//        // TODO in this method: notify/All
-//
-//        $player_cards = $this->cards->getPlayerHand($player_id);
-//        if (count($player_cards) - $nbrOfCards <= 0) {
-//            $this->eliminatePlayerCustom($player_id);
-//            return count($player_cards);
-//        }
-//        $cards_id = array_column(array_slice($player_cards, 0, $nbrOfCards, true), 'id');
-//        $this->cards->moveCards($cards_id, 'cardsontable');
-//
-//        return count($player_cards);
+        $players = DbUtils::getPlayersState();
+        $nbrCardsOnTable = count(DbUtils::getCards("cardsontable"));
 
-//        // Check the penalty didn't result to end of game for the player
-//        // TODO call processEndGame instead
-//        if ($this->cards->countCardInLocation('hand', $current_player_id) == 52) {
-//            throw new feException(self::_("You won the game"), true);
-//        } else if ($this->cards->countCardInLocation('hand', $current_player_id) == 0) {
-//            throw new feException(self::_("You lost the game"), true);
-//        }
+        foreach ($players as $player_id => $player) {
+            if ($player['eliminated'] == 1) {
+                continue;
+            }
+
+            $cards = DbUtils::getCards("hand", $player_id);
+            $nbrPlayerCards = count($cards);
+
+            if ($nbrPlayerCards + $nbrCardsOnTable == 52) {
+                $this->gamestate->nextState("endGame");
+                return;
+            }
+        }
     }
 
     private function eliminatePlayerCustom($player_id)
     {
         self::DbQuery("UPDATE player SET eliminated=1 WHERE player_id='$player_id'");
         self::eliminatePlayer($player_id);
-
-        // TODO check last player standing is winner
     }
 
     private function getTime()
@@ -573,29 +592,11 @@ class EgyptianRatscrew extends Table
         // check challenge
         $this->processChallenge();
 
+        // check player eliminated
+        $this->checkPlayerEliminated();
+
         // check end game
-
-
-        // check player eliminated and apply score
-        $players = self::loadPlayersBasicInfos();
-        $active_player_id = self::getActivePlayerId();
-        foreach ($players as $player_id => $player) {
-            $cards = DbUtils::getCards("hand", $player_id);
-            $nbrCards = count($cards);
-            if ($nbrCards == 0) {
-                if (DbUtils::getPlayersState()[$player_id]['eliminated'] == 0) {
-                    // Update winner score
-                    DbUtils::incrementScore($active_player_id);
-                    // Update players stats
-                    self::incStat(1, "playerEliminated", $active_player_id);
-                    // Set eliminated player as out of the table
-                    $this->eliminatePlayerCustom($player_id);
-                }
-            } else if ($nbrCards == 52) {
-                $this->gamestate->nextState("endGame");
-                return;
-            }
-        }
+        $this->checkGameEnd();
 
         // update stats
         // TODO?
