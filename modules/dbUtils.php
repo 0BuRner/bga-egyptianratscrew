@@ -84,4 +84,9 @@ class DbUtils
     {
         Table::DbQuery("UPDATE player SET player_score=player_score+1 WHERE player_id='$player_id'");
     }
+
+    public static function updateAllCardsVisibility($visibility)
+    {
+        Table::DbQuery("UPDATE card SET hidden=" . (1 - $visibility) . " WHERE 1");
+    }
 }

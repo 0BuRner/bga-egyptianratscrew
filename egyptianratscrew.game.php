@@ -360,19 +360,27 @@ class EgyptianRatscrew extends Table
         }
     }
 
-    private function processPenalty($player_id, $nbrOfCards)
+    private function checkGameEnd()
     {
-        // TODO in this method: notify/All
+//        // TODO in this method: notify/All
+//
+//        $player_cards = $this->cards->getPlayerHand($player_id);
+//        if (count($player_cards) - $nbrOfCards <= 0) {
+//            $this->eliminatePlayerCustom($player_id);
+//            return count($player_cards);
+//        }
+//        $cards_id = array_column(array_slice($player_cards, 0, $nbrOfCards, true), 'id');
+//        $this->cards->moveCards($cards_id, 'cardsontable');
+//
+//        return count($player_cards);
 
-        $player_cards = $this->cards->getPlayerHand($player_id);
-        if (count($player_cards) - $nbrOfCards <= 0) {
-            $this->eliminatePlayerCustom($player_id);
-            return count($player_cards);
-        }
-        $cards_id = array_column(array_slice($player_cards, 0, $nbrOfCards, true), 'id');
-        $this->cards->moveCards($cards_id, 'cardsontable');
-
-        return count($player_cards);
+//        // Check the penalty didn't result to end of game for the player
+//        // TODO call processEndGame instead
+//        if ($this->cards->countCardInLocation('hand', $current_player_id) == 52) {
+//            throw new feException(self::_("You won the game"), true);
+//        } else if ($this->cards->countCardInLocation('hand', $current_player_id) == 0) {
+//            throw new feException(self::_("You lost the game"), true);
+//        }
     }
 
     private function eliminatePlayerCustom($player_id)
@@ -444,14 +452,6 @@ class EgyptianRatscrew extends Table
             return;
         }
 
-        // Check the penalty didn't result to end of game for the player
-        // TODO call processEndGame instead
-        if ($this->cards->countCardInLocation('hand', $current_player_id) == 52) {
-            throw new feException(self::_("You won the game"), true);
-        } else if ($this->cards->countCardInLocation('hand', $current_player_id) == 0) {
-            throw new feException(self::_("You lost the game"), true);
-        }
-
         // The pile has been slapped correctly, so the player can take the pile (and still let other players slap/play)
         $slappingPlayers = $this->getSlappingPlayers();
         $cardsOnTable = DbUtils::getCards("cardsontable");
@@ -469,6 +469,12 @@ class EgyptianRatscrew extends Table
         // Update card location to keep card order (in case of refresh)
         $time_ms = $this->getTime();
         DbUtils::updateCardPlayTime($top_card_id, $time_ms);
+
+        // Make all hidden cards as visible (initial hidden cards on table)
+        if (self::getGameStateValue("firstHandPlayed") == 0) {
+            DbUtils::updateAllCardsVisibility(1);
+            self::setGameStateValue("firstHandPlayed", 1);
+        }
 
         // Notify all players
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${value_displayed} ${color_displayed}'), array(

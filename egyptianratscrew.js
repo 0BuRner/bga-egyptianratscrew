@@ -204,8 +204,6 @@ define([
             removePlayerCards: async function(player_id, nbr_cards) {
                 for (let i = 0; i < nbr_cards; i++) {
                     this.playerStocks[player_id].removeFromStock(-1, 'pile');
-                    // TODO make penalty cards visible and bottom of the stack (check front-end and back-end)
-                    this.tableStock.addToStockWithId(-1, i);
                     await this.sleep(150);
                 }
             },
@@ -233,6 +231,15 @@ define([
 
             moveCardsToBottomPile: function(player_id, nbr_cards) {
                 this.removePlayerCards(player_id, nbr_cards);
+
+                let player_count = this.playerStocks[player_id].count();
+                if (player_count < nbr_cards) {
+                    nbr_cards = player_count;
+                }
+                // TODO make penalty cards visible and bottom of the stack (check front-end and back-end)
+                for (let i = 0; i < nbr_cards; i++) {
+                    this.tableStock.addToStock(-1);
+                }
             },
 
             moveAllCardsFromPileToPlayer: function(player_id) {
