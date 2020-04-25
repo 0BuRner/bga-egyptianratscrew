@@ -77,7 +77,7 @@ $machinestates = array(
         "type" => "activeplayer",
         "action" => "stPlayerTurn",
         "transitions" => array("validateTurn" => 25),
-        "possibleactions" => array("playCard")
+        "possibleactions" => array("playCard", "slapPile")
     ),
 
     25 => array(

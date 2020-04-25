@@ -94,7 +94,7 @@ define([
 
                 switch (stateName) {
                     case 'endTurn':
-                        this.showHands(false);
+                        // this.showHands(false);
                         break;
                 }
             },
@@ -107,7 +107,7 @@ define([
 
                 switch (stateName) {
                     case 'playerTurn':
-                        this.showHands(true);
+                        // this.showHands(true);
                         break;
                     case 'validateTurn':
                         // reset hands position
@@ -204,6 +204,8 @@ define([
             removePlayerCards: async function(player_id, nbr_cards) {
                 for (let i = 0; i < nbr_cards; i++) {
                     this.playerStocks[player_id].removeFromStock(-1, 'pile');
+                    // TODO make penalty cards visible and bottom of the stack (check front-end and back-end)
+                    this.tableStock.addToStockWithId(-1, i);
                     await this.sleep(150);
                 }
             },

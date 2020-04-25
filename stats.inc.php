@@ -63,6 +63,9 @@ $stats_type = array(
             "type" => "int"),
         "playerEliminated" => array("id" => 15,
             "name" => totranslate("Number of players eliminated"),
+            "type" => "int"),
+        "playCardFailed" => array("id" => 16,
+            "name" => totranslate("Number of times you played a card not in your turn"),
             "type" => "int")
     )
 );

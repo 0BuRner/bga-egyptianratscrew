@@ -41,6 +41,7 @@ class EgyptianRatscrew extends Table
             "challengeInProgress" => 10,
             "challengeMaxTry" => 11,
             "challengeTry" => 12,
+            "firstHandPlayed" => 20,
             "gameLength" => 100));
 
         $this->cards = self::getNew("module.common.deck");
@@ -88,6 +89,7 @@ class EgyptianRatscrew extends Table
         self::setGameStateInitialValue("challengeInProgress", 0);
         self::setGameStateInitialValue("challengeMaxTry", 0);
         self::setGameStateInitialValue("challengeTry", 0);
+        self::setGameStateInitialValue("firstHandPlayed", 0);
 
         // Create cards
         $this->cards->createCards($this->createCards(), 'deck');
@@ -184,6 +186,40 @@ class EgyptianRatscrew extends Table
         return $players[$player_id]['player_name'];
     }
 
+    private function instantSlapPenalty($player_id, $penalty)
+    {
+        // Move X cards of player to the bottom of the table cards pile
+        $cards = CardHelper::getCards($this->cards->getPlayerHand($player_id), $penalty);
+        $cards_id = array_column($cards, 'id');
+        $this->cards->moveCards($cards_id, 'cardsontable');
+
+        self::incStat(1, "pileSlapFailed", $player_id);
+
+        // Notify all about wrong slap to apply penalty
+        self::notifyAllPlayers('slapFailed', clienttranslate('Penalty for ${player_name} who wrongly slapped the pile !'), array(
+            'players_id' => array($player_id),
+            'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $player_id),
+            'penalty' => $penalty
+        ));
+    }
+
+    private function instantPlayPenalty($player_id, $penalty)
+    {
+        // Move X cards of player to the bottom of the table cards pile
+        $cards = CardHelper::getCards($this->cards->getPlayerHand($player_id), $penalty);
+        $cards_id = array_column($cards, 'id');
+        $this->cards->moveCards($cards_id, 'cardsontable');
+
+        self::incStat(1, "playCardFailed", $player_id);
+
+        // Notify all about wrong slap to apply penalty
+        self::notifyAllPlayers('slapFailed', clienttranslate('Penalty for ${player_name} who wrongly played a card !'), array(
+            'players_id' => array($player_id),
+            'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $player_id),
+            'penalty' => $penalty
+        ));
+    }
+
     private function getSlappingPlayersName($slappingPlayers)
     {
         $result = array();
@@ -271,8 +307,6 @@ class EgyptianRatscrew extends Table
             // Move X cards of player to the bottom of the table cards pile
             $cards = CardHelper::getCards($this->cards->getPlayerHand($fail_player_id), $penalty);
             $cards_id = array_column($cards, 'id');
-//            self::debug("Player hand: " . var_export($this->cards->getPlayerHand($fail_player_id), true));
-//            self::debug("Penalty cards: " . var_export($cards, true));
             $this->cards->moveCards($cards_id, 'cardsontable');
 
             self::incStat(1, "pileSlapFailed", $fail_player_id);
@@ -311,7 +345,7 @@ class EgyptianRatscrew extends Table
                 // Challenge ended
                 self::setGameStateValue("challengeInProgress", 0);
 
-                // TODO move cards for challenge lost (make this a function)
+                // TODO move cards for challenge lost (make this a function as it is almost duplicate)
                 $winner_id = self::getPlayerBefore(self::getActivePlayerId());
                 $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
                 // Notify all players about the winner
@@ -368,6 +402,13 @@ class EgyptianRatscrew extends Table
         self::debug("Pile slapped");
 
         $player_id = self::getCurrentPlayerId();
+        $state = $this->gamestate->state();
+
+        if ($state['name'] != 'validateTurn') {
+            // TODO use global variable for penalty value
+            $this->instantSlapPenalty($player_id, 3);
+            return;
+        }
 
         $slappingPlayers = $this->getSlappingPlayers();
         // Update slapping player list
@@ -398,11 +439,9 @@ class EgyptianRatscrew extends Table
         // Penalty for playing when it wasn't his turn
         // TODO improve by keeping list of players having already played (like slap) to avoid abusive multiple penalties
         if ($current_player_id != $active_player_id) {
-//            $result = $this->processPenalty($player_id, 3);
-//            if ($result == 0) {
-//                throw new feException(self::_("No cards remaining. Bye bye !"), true);
-//            }
-            throw new feException(self::_("It was not your turn to play ! You got a penalty !"), true);
+            // TODO use global variable for penalty value
+            $this->instantPlayPenalty($current_player_id, 3);
+            return;
         }
 
         // Check the penalty didn't result to end of game for the player
