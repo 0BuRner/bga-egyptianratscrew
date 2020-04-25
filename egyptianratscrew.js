@@ -91,6 +91,12 @@ define([
 
             onEnteringState: function (stateName, args) {
                 console.log('Entering state: ' + stateName);
+
+                switch (stateName) {
+                    case 'endTurn':
+                        this.showHands(false);
+                        break;
+                }
             },
 
             // onLeavingState: this method is called each time we are leaving a game state.
@@ -100,12 +106,12 @@ define([
                 console.log('Leaving state: ' + stateName);
 
                 switch (stateName) {
+                    case 'playerTurn':
+                        this.showHands(true);
+                        break;
                     case 'validateTurn':
                         // reset hands position
-                        for (let player_id in this.players) {
-                            // position must match 'top' and 'left' values in css
-                            this.slideToObjectPos("player_hand_" + player_id, "player_seat_" + player_id, 85, 35).play();
-                        }
+                        this.resetHands();
                         this.slapCounter = 0;
                         break;
                 }
@@ -236,6 +242,23 @@ define([
                 }, 500);
             },
 
+            showHands: function (visible) {
+                for (let player_id in this.players) {
+                    if (visible) {
+                        dojo.style('player_hand_' + player_id, 'visibility', 'visible');
+                    } else {
+                        dojo.style('player_hand_' + player_id, 'visibility', 'hidden');
+                    }
+                }
+            },
+
+            resetHands: function() {
+                for (let player_id in this.players) {
+                    // position must match 'top' and 'left' values in css
+                    this.slideToObjectPos("player_hand_" + player_id, "player_seat_" + player_id, 85, 35).play();
+                }
+            },
+
             ///////////////////////////////////////////////////
             //// Player's action
 
@@ -251,16 +274,10 @@ define([
             */
 
             onSlapPile: function (event) {
-                // TODO client-side animation before receiving server confirmation?
-                console.log("Pile slapped " + event);
-
                 this.ajaxcall("/egyptianratscrew/egyptianratscrew/slapPile.html", {}, this, function (result) {}, function (is_error) {});
             },
 
             onPlayCard: function (event) {
-                // TODO client-side animation before receiving server confirmation?
-                console.log("Card played " + event);
-
                 this.ajaxcall("/egyptianratscrew/egyptianratscrew/playCard.html", {}, this, function (result) {}, function (is_error) {});
             },
 
