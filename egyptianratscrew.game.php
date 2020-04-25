@@ -612,6 +612,12 @@ class EgyptianRatscrew extends Table
         $this->gamestate->nextState("playerTurn");
     }
 
+    function stZombieTurn()
+    {
+        $this->activeNextPlayer();
+        $this->gamestate->nextState("playerTurn");
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Zombie
 ////////////
@@ -625,7 +631,13 @@ class EgyptianRatscrew extends Table
     */
     function zombieTurn($state, $active_player)
     {
-        throw new feException("Zombie mode not supported for Egyptian Ratscrew");
+        $statename = $state['name'];
+
+        if ($statename == 'validateTurn' || $statename == 'playerTurn' || $statename == 'endTurn' || $statename == 'zombiePass') {
+            $this->gamestate->nextState("zombiePass");
+        } else {
+            throw new BgaVisibleSystemException("Zombie mode not supported at this game state: " . $statename);
+        }
     }
 }
   

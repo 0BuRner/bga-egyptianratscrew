@@ -76,7 +76,7 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} must play a card'),
         "type" => "activeplayer",
         "action" => "stPlayerTurn",
-        "transitions" => array("validateTurn" => 25),
+        "transitions" => array("validateTurn" => 25, "zombiePass" => 98),
         "possibleactions" => array("playCard", "slapPile")
     ),
 
@@ -97,6 +97,14 @@ $machinestates = array(
         "action" => "stEndTurn",
         "transitions" => array("playerTurn" => 20, "gameEnd" => 99),
         "updateGameProgression" => true
+    ),
+
+    98 => array(
+        "name" => "zombiePass",
+        "description" => "",
+        "type" => "game",
+        "action" => "stZombieTurn",
+        "transitions" => array("playerTurn" => 20)
     ),
 
     // Final state. Please do not modify.
