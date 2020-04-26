@@ -234,7 +234,7 @@ class EgyptianRatscrew extends Table
     {
         $result = array();
 
-        $dbres = self::DbQuery("SELECT player_id id, slap_time FROM player WHERE slap_time IS NOT NULL ORDER BY slap_time ASC");
+        $dbres = self::DbQuery("SELECT player_id id, slap_time FROM player WHERE slap_time IS NOT NULL AND eliminated=0 ORDER BY slap_time ASC");
         while ($player = mysqli_fetch_assoc($dbres)) {
             array_push($result, $player['id']);
         }
@@ -443,6 +443,12 @@ class EgyptianRatscrew extends Table
 
         $player_id = self::getCurrentPlayerId();
         $state = $this->gamestate->state();
+
+        $players = DbUtils::getPlayersState();
+
+        if ($players[$player_id]['eliminated'] == 1) {
+            throw new feException(self::_("You are eliminated and cannot play anymore !"), true);
+        }
 
         if ($state['name'] != 'validateTurn') {
             // TODO use global variable for penalty value
