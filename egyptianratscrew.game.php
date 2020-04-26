@@ -424,7 +424,7 @@ class EgyptianRatscrew extends Table
             $nbrPlayerCards = count($cards);
 
             if ($nbrPlayerCards + $nbrCardsOnTable == 52) {
-                $this->gamestate->nextState("endGame");
+                $this->gamestate->nextState("gameEnd");
                 return;
             }
         }
