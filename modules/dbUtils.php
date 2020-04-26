@@ -89,4 +89,17 @@ class DbUtils
     {
         Table::DbQuery("UPDATE card SET hidden=" . (1 - $visibility) . " WHERE 1");
     }
+
+    public static function updatePlayerPenalty($player_id = null)
+    {
+        $value = 0;
+        $q = "";
+
+        if ($player_id != null) {
+            $value = 1;
+            $q = " AND player_id = " . $player_id;
+        }
+
+        Table::DbQuery("UPDATE player SET penalty=". $value ." WHERE 1" . $q);
+    }
 }

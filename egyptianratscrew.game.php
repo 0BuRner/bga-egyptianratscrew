@@ -207,6 +207,16 @@ class EgyptianRatscrew extends Table
 
     private function instantPlayPenalty($player_id, $penalty)
     {
+        // Check player hasn't already a wrong play for this turn (to avoid flood)
+        $players = DbUtils::getPlayersState();
+        $player = $players[$player_id];
+
+        if ($player['penalty'] == 0) {
+            DbUtils::updatePlayerPenalty($player_id);
+        } else {
+            throw new feException(self::_("You've already tried to play a card when it's not your turn"), true);
+        }
+
         // Move X cards of player to the bottom of the table cards pile
         $cards = CardHelper::getCards($this->cards->getPlayerHand($player_id), $penalty);
         $cards_id = array_column($cards, 'id');
@@ -215,7 +225,7 @@ class EgyptianRatscrew extends Table
         self::incStat(1, "playCardFailed", $player_id);
 
         // Notify all about wrong slap to apply penalty
-        self::notifyAllPlayers('slapFailed', clienttranslate('Penalty for ${player_name} who wrongly played a card !'), array(
+        self::notifyAllPlayers('slapFailed', clienttranslate('Penalty for ${player_name} who wrongly played a card'), array(
             'players_id' => array($player_id),
             'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $player_id),
             'penalty' => $penalty
@@ -330,7 +340,9 @@ class EgyptianRatscrew extends Table
 
         $card = CardHelper::getCardAt($cardsOnTable, 0);
 
+        // If card is a figure (J,Q,K,A)
         if ($card['type_arg'] > 10) {
+            // Reset challenge
             self::setGameStateValue("challengeInProgress", 1);
             self::setGameStateValue("challengeMaxTry", $this->challenge_values[$card['type_arg']]);
             self::setGameStateValue("challengeTry", 0);
@@ -616,6 +628,9 @@ class EgyptianRatscrew extends Table
 
         // check end game
         $this->checkGameEnd();
+
+        // reset penalty for all players
+        DbUtils::updatePlayerPenalty();
 
         // Change active player depending on challenge state
         if (self::getGameStateValue("challengeInProgress") == 0) {
