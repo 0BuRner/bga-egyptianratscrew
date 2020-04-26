@@ -346,7 +346,7 @@ class EgyptianRatscrew extends Table
                 self::setGameStateValue("challengeInProgress", 0);
 
                 // TODO move cards for challenge lost (make this a function as it is almost duplicate)
-                $winner_id = self::getPlayerBefore(self::getActivePlayerId());
+                $winner_id = $this->getPreviousPlayerNotEliminated(self::getActivePlayerId());
                 $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
                 // Notify all players about the winner
                 self::notifyAllPlayers('slapWon', clienttranslate('${player_name} won the pile !'), array(
@@ -358,6 +358,19 @@ class EgyptianRatscrew extends Table
                 self::incStat(1, "challengeLost", self::getActivePlayerId());
             }
         }
+    }
+
+    private function getPreviousPlayerNotEliminated($player_id)
+    {
+        $players = DbUtils::getPlayersState();
+
+        $i = 0;
+        do {
+            $player_id = self::getPlayerBefore($player_id);
+            $i++;
+        } while ($players[$player_id]['eliminated'] == 1 && $i <= count($players));
+
+        return $player_id;
     }
 
     private function checkPlayerEliminated()
