@@ -280,7 +280,6 @@ class EgyptianRatscrew extends Table
             } else {
                 $this->processSlapFail($slappingPlayers);
             }
-            $this->resetSlappingPlayers();
         } else if (empty($slappingPlayers) && $isSlappable) {
             self::incStat(1, "pileSlapMissed");
         }
@@ -404,10 +403,25 @@ class EgyptianRatscrew extends Table
             $nbrPlayerCards = count($cards);
 
             if ($nbrPlayerCards == 0) {
-                // Update winner score
-                DbUtils::incrementScore($active_player_id);
-                // Update players stats
-                self::incStat(1, "playerEliminated", $active_player_id);
+                // Active player has eliminated
+                $killer_id = null;
+                if ($active_player_id != $player_id) {
+                    // Eliminated by slap
+                    $killer_id = $active_player_id;
+                } else if (self::getGameStateValue("challengeInProgress") == 1) {
+                    // Eliminated by challenge
+                    $killer_id = $this->getPreviousPlayerNotEliminated($player_id);
+                }
+
+                // If eliminated by another player (slap or challenge)
+                if ($killer_id != null) {
+                    // Update winner score
+                    DbUtils::incrementScore($killer_id);
+                    // Update players stats
+                    self::incStat(1, "playerEliminated", $killer_id);
+                }
+                // Else he has been eliminated because of no cards anymore (play or penalty)
+
                 // Set eliminated player as out of the table
                 $this->eliminatePlayerCustom($player_id);
             }
@@ -635,6 +649,8 @@ class EgyptianRatscrew extends Table
 
         // reset penalty for all players
         DbUtils::updatePlayerPenalty();
+        // reset slapping players
+        $this->resetSlappingPlayers();
 
         // Change active player depending on challenge state
         if (self::getGameStateValue("challengeInProgress") == 0) {

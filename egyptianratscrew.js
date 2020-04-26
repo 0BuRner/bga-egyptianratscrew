@@ -90,8 +90,6 @@ define([
             //
 
             onEnteringState: function (stateName, args) {
-                console.log('Entering state: ' + stateName);
-
                 switch (stateName) {
                     case 'endTurn':
                         // this.showHands(false);
@@ -103,8 +101,6 @@ define([
             //                 You can use this method to perform some user interface changes at this moment.
             //
             onLeavingState: function (stateName) {
-                console.log('Leaving state: ' + stateName);
-
                 switch (stateName) {
                     case 'playerTurn':
                         // this.showHands(true);
@@ -121,8 +117,6 @@ define([
             //                        action status bar (ie: the HTML links in the status bar).
             //
             onUpdateActionButtons: function (stateName, args) {
-                console.log('onUpdateActionButtons: ' + stateName + ' : ' + args);
-
                 if (this.isCurrentPlayerActive()) {
                     switch (stateName) {
                         case 'validateTurn':
@@ -225,7 +219,7 @@ define([
                 player_stock.removeFromStock(-1, 'pile');
                 // Add visible card to the pile
                 setTimeout(() => {
-                    this.tableStock.addToStockWithId(card_id, card_id);
+                    this.tableStock.addToStock(card_id);
                 }, 500);
             },
 
