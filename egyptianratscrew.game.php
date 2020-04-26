@@ -291,11 +291,13 @@ class EgyptianRatscrew extends Table
         // Winner is the fastest player who slap the pile, so the first in the array
         $winner_id = array_shift($slappingPlayers);
         // Move cards on the table to the bottom of the player's hand
+        $nbrCardsOnTable = count(DbUtils::getCards("cardsontable"));
         $this->cards->moveAllCardsInLocation('cardsontable', 'hand', null, $winner_id);
         // Notify all players about the winner
         self::notifyAllPlayers('slapWon', clienttranslate('${player_name} won the pile !'), array(
             'player_id' => $winner_id,
             'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $winner_id),
+            'nbr_cards' => $nbrCardsOnTable
         ));
         // Increment stats counter
         self::incStat(1, "pileSlapWon", $winner_id);
@@ -333,8 +335,9 @@ class EgyptianRatscrew extends Table
     private function processChallenge()
     {
         $cardsOnTable = DbUtils::getCards("cardsontable");
+        $nbrCardsOnTable = count($cardsOnTable);
 
-        if (count($cardsOnTable) == 0) {
+        if ($nbrCardsOnTable == 0) {
             return;
         }
 
@@ -365,6 +368,7 @@ class EgyptianRatscrew extends Table
                 self::notifyAllPlayers('slapWon', clienttranslate('${player_name} won the pile !'), array(
                     'player_id' => $winner_id,
                     'player_name' => $this->getPlayerName(self::loadPlayersBasicInfos(), $winner_id),
+                    'nbr_cards' => $nbrCardsOnTable
                 ));
 
                 self::incStat(1, "challengeWon", $winner_id);

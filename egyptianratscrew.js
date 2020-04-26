@@ -242,8 +242,7 @@ define([
                 }
             },
 
-            moveAllCardsFromPileToPlayer: function(player_id) {
-                let nbr_cards = this.tableStock.count();
+            moveAllCardsFromPileToPlayer: function(player_id, nbr_cards) {
                 this.tableStock.removeAllTo("player_cards_" + player_id);
                 setTimeout(() => {
                     this.addPlayerCards(player_id, nbr_cards);
@@ -342,7 +341,8 @@ define([
             },
             notif_slapWon: function (notif) {
                 let player_id = notif.args.player_id;
-                this.moveAllCardsFromPileToPlayer(player_id);
+                let nbr_cards = notif.args.nbr_cards;
+                this.moveAllCardsFromPileToPlayer(player_id, nbr_cards);
             },
         });
     });
